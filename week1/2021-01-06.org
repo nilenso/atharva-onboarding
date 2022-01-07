@@ -1,0 +1,68 @@
+#+TITLE: TIL 2021-01-06
+#+OPTIONS: toc:nil
+
+* What did I do today
+- Read Clojure from the ground up: State
+- Solved more 4clojure problems, as functionally and idiomatically as possible this time. Solved 2-3 medium, will ramp up to hard tomorrow.
+* What will I do tomorrow
+- Try harder 4clojure problems, while keeping it functional.
+- Could not read any pragprog today, so that will carry over tomorrow.
+- Still need to try more involved problems, rather than one-function problems. Prolly after reading aphyr's chapter on logistics, I can get started?
+* Blockers
+- Not a blocker, but seeing some strange behaviour with 4clojure (see at the end).
+* What I learned today
+** Clojure from the ground up
+- Lots of new information. Learnt about some concurrency primitives.
+- Delay: Lazy eval, but unlike a thunk, execution happens only once on a deref, and it looks up the value on subsequent derefs.
+- Future: Send a computation off in a new thread of execution. Deref asks for the value back, blocks if still not done.
+- Promise: A holder of a future computation that is not known yet. Deref blocks until someone has delivered the promise. BTW: This is very different from JS Promises.
+- Atoms are opaque holders of state. They are linearizable, ie, multiple writers can write concurrently to the atom, but it will ensure the appearance of some sequence of writes. Every read after a write ensures the newest state for all readers.
+- Refs are opaque holders of state. They ensure serializability(???). Along with dosync you can do transaction-style updates to a group of refs.
+- Wrote my first clojure macro, which was basically simulating futures using promises.
+- Vars def'd with =^:dynamic= are exactly the same as Racket's =parameter='s (vars with [[https://prl.ccs.neu.edu/blog/2019/09/05/lexical-and-dynamic-scope/][indefinite scope, dynamic extent]]). Neena's mention of dynamic vars (and their thread-local scope) in yesterday's discussion clicked harder today.
+* Questions and Comments
+** Clojure
+- Aphyr's guide on state and concurrency is a good start, but I still don't have the big picture of how futures, promises and all the transact-y stuff comes together. For example: how do people do async network stuff?
+- I also did not quite grasp Q4 and Q5 in the exercises of [[https://aphyr.com/posts/306-clojure-from-the-ground-up-state][aphyr's guide]].
+- Aphyr mentions in his tutorial:
+  "Atoms are a great way to represent state, but they are only linearizable individually. Updates to an atom aren’t well-ordered with respect to other atoms, so if we try to update more than one atom at once, we could see the same kinds of bugs that we did with vars."
+  I need to see an example of how things blow up when trying to update several atoms. I also do not understand the distinction between serializability and linearizability. Maybe that would make sense after trying to see where atoms fall short compared to refs??
+- I did a =(source frequencies)= to get:
+  #+begin_src clojure
+(defn frequencies
+  "Returns a map from distinct items in coll to the number of times
+  they appear."
+  {:added "1.2"
+   :static true}
+  [coll]
+  (persistent!
+   (reduce (fn [counts x]
+             (assoc! counts x (inc (get counts x 0))))
+           (transient {}) coll)))
+  #+end_src
+
+  wow much impurity such mutations. what are transients?? should figure that out sometime later, although idk how important this is.
+
+  On 4clojure, I came up with a nice functional solution for implementing =frequencies=, and it made me very happy.
+  #+begin_src clojure
+(defn freqs [coll]
+  (apply (partial merge-with +)
+         (map #(hash-map %1 1) coll)))
+  #+end_src
+
+  Definitely better than my loop-recur monoliths I was previously writing?
+
+  One more bizarre error for [[https://4clojure.oxal.org/#/problem/56][problem 56]]. My solution works on my clojure REPL and an online cljs REPL. It ONLY does not work on the 4clojure website for two cases.
+
+  #+begin_src clojure
+(defn ord-dist [coll]
+  "Create sequence of distinct items, while maintaining order"
+  (into []
+        (apply sorted-set-by
+               #(< (.indexOf coll %1) (.indexOf coll %2)) coll)))
+
+;; (= (ord-dist [:a :a :b :b :c :c]) [:a :b :c]) ; on my REPL/online cljs REPL
+;; (= (ord-dist [:a :a :b :b :c :c]) [:a])       ; on 4clojure
+  #+end_src
+
+  Something wrong with the implementation of 4clojure??

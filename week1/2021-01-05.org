@@ -1,0 +1,81 @@
+#+TITLE: TIL 2021-01-05
+#+OPTIONS: toc:nil
+
+* What did I do today?
+- Three 4clojure problems, one of them hard level.
+- Read more PragProg
+
+* What will I do tomorrow?
+- I'll continue reading the same things, but I also want to pick up some more 'higher-order' problems if possible, the kind that needs more than a single function or module to solve.
+- Try another medium/hard problems and force myself to do it more idiomatically.
+
+* Blockers
+- No blockers as such, but I feel like my Clojure-speak might be a bit bizarre. I want to solve a bigger problem and get feedback on it by this week to see if my code is actually very bizarre or not.
+
+* What I learned today
+** The Pragmatic Programmer
+- DRY is more than just avoiding repeated code lines. It's a general principle that ensures that the system remains consistent and easy to change.
+- Orthogonality is also important for easy to change code. Complexity is managed by making sure changes to one part of a system does not affect other parts.
+- The book's depiction of DRY and orthogonality is easier said than done imo (the authors say so themselves). In my time with the Git project, I worked on code written by people 100x smarter and more competent than me, and yet it was as orthogonal as a Jenga tower slathered with eel slime.
+** Misc
+- Had a great conversation with Srihari. He clarified wth complect means, and how it relates with Orthogonality.
+
+  He also had a look at my highly complected imperative solution. Made me realize there is still a long way to go for me to think more functionally.
+
+  Finding the longest subsequence, ie: [1 0 1 2 3 0 4 5] -> [0 1 2 3]
+
+  My solution:
+
+  #+BEGIN_SRC clojure
+(defn ss [coll]
+  (loop [longest [(first coll)]
+         curr [(first coll)]
+         coll coll]
+    (cond
+      (= (count coll) 1) (if (> (count longest) 1) longest [])
+      :else (let [new-curr (if (< (first coll) (second coll))
+                             (conj curr (second coll))
+                             [(second coll)])
+                  new-longest (if (> (count new-curr) (count longest))
+                                new-curr longest)]
+              (recur new-longest new-curr (rest coll))))))
+  #+END_SRC
+
+  The problem with this solution is that it's too imperative, and I'm effectively doing the equivalent of iterating and mutating. Contrast with the more declarative solution (annotated because it's hard for me to make sense of with a glance)
+
+  #+BEGIN_SRC clojure
+(fn [c]
+  (->> (partition 2 1 c)                     ; partition into pairs, with one overlap
+
+    (partition-by #(- (second %) (first %))) ; partition further based on
+                                             ; difference between pairs
+
+    (filter #(= 1 (- (second (first %)) (ffirst %))))  ; only keep pair groups where
+                                                       ; the numbers are consecutive ; (and increasing)
+
+    (reduce #(if (< (count %1) (count %2)) %2 %1) []) ; get the biggest such
+                                                      ; pair group
+    ; flatten and make distinct to get back largest consecutive subsequence
+    (flatten)
+    (distinct)))
+  #+END_SRC
+
+  Where I am currently lacking is thinking in such a declarative way. I even find the latter version a little harder and slower to dissect in my head. And then there's solutions like these which whizz over my head completely:
+
+  #+begin_src clojure
+#(apply max-key %
+  (reverse (for [x (%2 (% %3)) % (%2 x (- (% %3) 1)) ; keeping track of positional
+                                                     ; args hurts my head...
+                                                     ; ...clojure has for???
+  	   :let [% (subvec %3 x (+ % 2))]]
+	     (if (apply < %) % []))))
+count range ; why are these floating here without the cuddly parens??
+  #+end_src
+
+  I hope I can come back to this two weeks from now and feel more comfortable reading all that.
+
+  (nuance: quite possible 4clojure solution writers tend to be golf-y, and this can be improved on)
+
+* Questions
+- Clojure: are =def='s inside functions discouraged? Is =let= the preferred way to bind expressions within a function or 'scoped block'?
+  (Context: in Racket it's accepted to have local defines scattered in a block because they stay local in scope.)

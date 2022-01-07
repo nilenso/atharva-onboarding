@@ -1,0 +1,20 @@
+#+TITLE: TIL 2021-01-04
+
+* Notes: The Pragmatic Programmer
+ - Broken windows ruin cities—don't let neglect persist. It is not too different from how people spit paan under marathahalli bridge because it's already pretty dirty there.
+ - Like the soldiers making stone soup, incrementally introducing ideas can drive change.
+ - That said, avoid the converse—gradual rot going unnoticed (boiled frogs)
+ - Be a smart communicator, notice how you sound. It's also about timing your communication right, and tailoring it to the audience.
+ - Treat your knowledge portfolio like a financial portfolio—diversify, invest what should increase in value, and keep learning and ensuring it is up to date.
+ - The essence of good design—ETC, ie, Easy To Change. Most rules are just a subset of ETC.
+
+* Notes: Clojure from the ground up
+ - Symbols resolve to Vars, which ultimately refer to a value. Why this distinction??? The other lisps and (and definitely Scheme) do no such thing.
+ - Is it because Symbols cannot be mutated, while Vars can? Even then, why is this distinction useful?
+
+* Misc
+- Attended my first stand-up meeting.
+
+* General thoughts
+- 4clojure's replacement website is a bit clunky. I need to refresh every time I go to a new problem for making the correct test cases pass. Mildly grating.
+- It's only the first day, but manipulating collections and doing low-level (albeit useful) operations might get boring fast. Maybe I should throw myself into harder problems and try to drown to know where I stand.
