@@ -1,0 +1,35 @@
+#+TITLE: TIL 2021-01-06
+#+OPTIONS: toc:nil
+
+* What did I do today
+- Read /Clojure from the ground up: Logistics, Modeling and (~70%) Polymorphism/
+- Read roughly about organizing projects from /Clojure for the Brave.../
+- Solved several medium 4clojure problems.
+- Read a little bit of /The Pragmatic Programmer/
+* What will I do on Monday
+- Finish reading about polymorphism and debugging from Aphyr's guide (effectively finishing their series).
+- Study some Clojure code (from nilenso org) to understand code organization.
+- Solve more 4clojure
+- Background reading of pragprog continues.
+* Blockers
+- nah
+* What I learned today (+ some comments on it)
+** Clojure from the brave and true
+- Namespaces provide isolation between object names. Dots separated names mirror the path of a file (are there exceptions?).
+- =require=: Evaluates a namespace symbol, and lets you use all public objects in it. The objects needs to be fully qualified, unless aliased with =:as=/=alias=, in which case, you qualify with the chosen alias.
+- =refer=: Lets you use symbols from another namespace without qualification.
+- =use=: Same as requiring, and then referring =:all=, Clojure community seems to frown on its usage in production code.
+- Just use =ns= macro btw, that combines all of the above and does other handy things like referring =clojure.core=.
+** Clojure from the ground up
+- Absolute basic unit testing from =clojure.test=.
+- I read about modeling a problem in Clojure, and read through aphyr's rocket ship example. My main observations:
+  - For modeling problems, favour many pure functions operating on few immutable data structures. Aphyr used a hashmap to represent the data.
+  - I am aware of some of the tradeoffs between Records and the persistent maps, but not too sure what is used when.
+- Polymorphism. Wew, so much new info here. It's a lot to take in, and I'll probably have to see how all these features are used in real code, whenever that happens.
+  - Clojure has multiple dispatch with multimethods. It uses =isa?= to determine how to select a function. We can setup our own relationship between symbols/keywords using =derive=. Neat!
+  - Clojure also has interfaces which feel highly bizarre to me. Haven't seen this in any other language. So you create interfaces with =definterface=, define methods (which are more like Java methods than Clojure's first-class functions, and behave differently, and are called differently), and then create an instance using =reify= (which closes over args) where you specify the methods for the interfaces. You cannot extend existing interfaces with new methods though.
+  - Clojure has protocols which appear way more useful. It's like an interface again, but you can extend a type with a previously defined interface, or extend an interface with a new method. Both this and multimethods solve [[https://wiki.c2.com/?ExpressionProblem][the expression problem]]. So I wonder what multimethods can solve, that protocols cannot?
+- I have still not finished the post on Polymorphism, so maybe reading the rest will paint a better picture.
+** The Pragmatic Programmer
+- Make your code, architecture, deployments and integrations reversible, because software is complex, and every component changes all the time, especially with all those fads. This mitigates the pain of change. Use good abstractions to make decisions reversible.
+- Use tracer bullet development, ie, make a minimum end-to-end solution that integrates all the parts. See if it works, and if it does, build around this thin tracer code. Note: this is different from prototypes, which are for exploration, and are meant to be disposed.
