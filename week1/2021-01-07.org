@@ -1,4 +1,4 @@
-#+TITLE: TIL 2021-01-06
+#+TITLE: TIL 2021-01-07
 #+OPTIONS: toc:nil
 
 * What did I do today
