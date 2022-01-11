@@ -1,0 +1,64 @@
+#+TITLE: 2022-01-11
+
+* What did I do today
+- Solve 4clojure problems a few mediums and one hard.
+- Attended standup
+* What will I do tomorrow
+- Solve more hard problems on 4clojure
+- Read about non-trivial problems solved in clojurey ways (from Joy of Clojure)
+  (since I did not do it today as planned)
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+- For the first time, nothing significantly new. A little bit about performance of transducers, but not in any useful detail.
+* Misc
+- Would love to get feedback on the solutions I added today, ie:
+  #+begin_src clojure
+;; https://4clojure.oxal.org/#/problem/60
+(defn reductionz [func acc coll]
+  (let [n (count coll)]
+    (->> coll
+         (repeat (inc n))
+         (map #(take %1 %2)
+              (range (inc n)))
+         (map #(reduce func acc %)))))
+
+;; https://4clojure.oxal.org/#/problem/69
+;; wew, this one took a while
+;; is this easy to understand?
+(defn murge-with [func & maps]
+  (apply merge
+         (for [k (distinct (mapcat keys maps))]
+           {k (reduce func (filter identity (map k maps)))})))
+
+;; https://4clojure.oxal.org/#/problem/70
+(defn splort [line]
+  (sort-by clojure.string/lower-case
+           (clojure.string/split line #"\W")))
+
+;; https://4clojure.oxal.org/#/problem/73
+;; Tic Tac Toe Verifier.
+;; Probably bad style to have internal functions
+;; strewn in like this? I stuffed these in because
+;; 4clojure likes everything in one function.
+(defn get-winner [board]
+  (letfn [(all-three [vec]
+            (condp = (distinct vec)
+              [:x] :x
+              [:o] :o
+              nil))
+          (rows [b] b)
+          (columns [b]
+            (for [pos [first second last]]
+              (map pos board)))
+          (diagonals [b]
+            [[(-> b first first) (-> b second second) (-> b last last)]
+             [(-> b first last)  (-> b second second) (-> b last first)]])
+          (solution-along [axis]
+            (some->> (axis board)
+                     (map all-three)
+                     (reduce #(or %1 %2))))]
+    (some solution-along [rows columns diagonals])))
+  #+end_src
+
+  All solutions till now can be found [[../4clojure.clj][here]].
