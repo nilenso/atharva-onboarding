@@ -119,6 +119,17 @@
          (for [k (distinct (mapcat keys maps))]
            {k (reduce func (filter identity (map k maps)))})))
 
+;; second attempt, trying to do with less stdlib
+(defn merge-wiff [func & maps]
+  (reduce (fn [m1 m2]
+            (reduce (fn [m [k2 v2]]
+                      (prn m :and k2 v2)
+                      (if (m k2)
+                        (assoc m k2 (func (m k2) v2))
+                        (assoc m k2 v2)))
+                    m1 m2))
+          maps))
+
 ;; https://4clojure.oxal.org/#/problem/70
 (defn splort [line]
   (sort-by clojure.string/lower-case
@@ -126,9 +137,8 @@
 
 ;; https://4clojure.oxal.org/#/problem/73
 ;; Tic Tac Toe Verifier.
-;; Probably bad style to have internal functions
-;; strewn in like this? I stuffed these in because
-;; 4clojure likes everything in one function.
+;; Probably bad style to have internal functions strewn in like this?
+;; I stuffed these in because 4clojure likes everything in one function.
 (defn get-winner [board]
   (letfn [(all-three [vec]
             (condp = (distinct vec)
@@ -147,3 +157,67 @@
                      (map all-three)
                      (reduce #(or %1 %2))))]
     (some solution-along [rows columns diagonals])))
+
+;; https://4clojure.oxal.org/#/problem/74
+;; Nerd snipe territory. This solution won't work for large numbers becoz
+;; floats. But I will spare myself from implementing this:
+;; https://stackoverflow.com/questions/295579/fastest-way-to-determine-if-an-integers-square-root-is-an-integer/18686659#18686659
+;;
+;; Also clojurescript interop is annoying me. Trust me (should you?!), this
+;; works on REPL.
+(defn str-squares-only [csvline]
+  (letfn [(is-square? [num]
+            (let [root (Math/sqrt num)]
+              (== num (* root root))))]
+    (as-> csvline x
+      (clojure.string/split x #",")
+      (map #(Integer/parseInt %) x)
+      (filter is-square? x)
+      (clojure.string/join "," x))))
+
+;; https://4clojure.oxal.org/#/problem/77
+(defn group-anagrams [words]
+  (->> words
+       (group-by frequencies)
+       vals
+       (filter #(> (count %) 1))
+       (map set)
+       set))
+
+;; https://4clojure.oxal.org/#/problem/79
+;; I couldn't solve this one without resorting to an imperative spaghetti. I
+;; peeked into the solution and this was the only "stateless" one, ie, not a
+;; loop-recur tangle or unreadable. Even though it's concise, nested maps in a
+;; reduce is hard to reason about without trying it out in the REPL. Once I did
+;; that, it made sense.
+;;
+;; Unlike tic-tac-toe, this hard-level problem is one that feels *easier* to
+;; think about imperatively. Easy != Simple?
+(defn shortest-path [triangle]
+  (first
+   (reduce (fn [cur nex]
+             (map + (map min cur (rest cur)) nex))
+           (reverse triangle))))
+
+;; https://4clojure.oxal.org/#/problem/82
+;;
+;; No, I didn't come up with this without assistance.
+;;
+;; This is inspired by one of the solutions that more cleanly (and successfully)
+;; did what I was trying. My initial solution was an unreadable mess of nested
+;; maps and filters, which was easily replaceable by a for comprehension (I was
+;; avoiding it because it "looked imperative"). Plus, destructuring exists,
+;; which I should remember to use more often.
+(defn transitive-closure [the-set]
+  (letfn [(transitives [s]
+            (for [[a b] s
+                  [c d] s
+                  :when (= c b)]
+              [a d]))
+          (merge-transitives [s]
+            (let [new-s (into s (transitives s))]
+              (when (not= s new-s) new-s)))]
+    (->> the-set
+         (iterate merge-transitives)
+         (take-while identity)
+         last)))
