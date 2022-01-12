@@ -1,0 +1,16 @@
+#+TITLE: 2022-01-12
+
+* What did I do today
+- Solve 4clojure problems: a couple mediums and two hards.
+- Attended townhall
+* What will I do tomorrow
+- Solve a few more hard problems on 4clojure
+- Read about non-trivial problems solved in clojurey ways (from Joy of Clojure)
+  (since I did not do it today either). Opened the book, but felt like I'm not sure what I'm quite looking for. Will probably only check out the A* implementation for the time being.
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+- Nothing new. Sharpened up what I already know.
+* Misc
+- Solved more problems. I left comments above the solutions in the file, generally how I felt while solving a problem.
+  Solutions can be found [[../4clojure.clj][here]].
