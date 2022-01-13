@@ -9,6 +9,7 @@
 * Blockers
 - nah
 * What I learned today (+ comments on the same)
-- Nothing new. Sharpened up what I already know.
+- Sharpened up what I already know.
+- Saw how to use a debugger in Emacs.
 * Misc
 - Updated solutions can be found [[../4clojure.clj][here]].
