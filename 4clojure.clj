@@ -271,6 +271,27 @@
          (map resolve-pairs)
          (apply +))))
 
+;; Same problem, refined a bit more
+(defn parse-roman-numeral-v2 [roman]
+  (let [table {\M 1000, \D 500, \C 100, \L 50, \X 10, \V 5, \I 1}
+        lookup (fn [key] (get table key))
+        split-into-pairs (fn [coll]
+                           (cond
+                             (even? (count coll)) (partition 2 coll)
+                             :else (as-> coll c
+                                     (rest c) (partition 2 c)
+                                     (conj c (take 1 coll)))))
+        resolve-pairs (fn [[n1 n2]]
+                        (cond
+                          (= [n1 n2] [n1 nil]) n1
+                          (< n1 n2) (- n2 n1)
+                          :else (+ n2 n1)))]
+    (->> roman
+         (map lookup)
+         split-into-pairs
+         (map resolve-pairs)
+         (apply +))))
+
 (comment
   "test cases and scratch area"
 
@@ -285,6 +306,17 @@
    (parse-roman-numeral "MMMCMXCIX")
    :is 3999
    (parse-roman-numeral "XLVIII")
+   :is 48]
+
+  [(parse-roman-numeral-v2 "XIV")
+   :is 14
+   (parse-roman-numeral-v2 "XIX")
+   :is 19
+   (parse-roman-numeral-v2 "DCCCXXVII")
+   :is 827
+   (parse-roman-numeral-v2 "MMMCMXCIX")
+   :is 3999
+   (parse-roman-numeral-v2 "XLVIII")
    :is 48]
 
   [(happy-number? 7)
