@@ -1,0 +1,14 @@
+#+TITLE: 2022-01-13
+
+* What did I do today
+- Solve 4clojure problems: a medium one, done in depth, and tried a hard.
+- Not much else. Wasn't able to get into flow today for some reason.
+* What will I do tomorrow
+- Solve a few more hard problems on 4clojure
+- If I get the time, and if anyone is available, I'll pair with someone and try to work out A* search in Clojure.
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+- Nothing new. Sharpened up what I already know.
+* Misc
+- Updated solutions can be found [[../4clojure.clj][here]].

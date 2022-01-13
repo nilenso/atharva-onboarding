@@ -221,3 +221,64 @@
          (iterate merge-transitives)
          (take-while identity)
          last)))
+
+;; https://4clojure.oxal.org/#/problem/86
+;; Also not cljs friendly, so won't run on 4clojure
+(defn happy-number-meh [number]
+  (letfn [(digits [n]
+            (map #(Character/digit % 10) (str n)))
+          (square [n] (* n n))
+          (digit-squares-sum [n]
+            (reduce + (map square (digits n))))]
+    (true? (reduce (fn [t1 [i sum2]]
+                     (if (= sum2 1) (reduced true) [i sum2]))
+                   (map vector
+                        (range 100)
+                        ;; tolerance value: how many iterations till we give up trying?
+                        (iterate digit-squares-sum number))))))
+
+;; better?
+(defn happy-number? [number]
+  (let [digits (fn [n]
+                 (map #(Character/digit % 10) (str n)))
+        square (fn [n] (* n n))
+        digit-squares-sum (fn [n]
+                            (reduce + (map square (digits n))))
+        exceeded-tolerance? (fn [tolerance n]
+                              (when (not= (count n) tolerance)
+                                true))
+        tolerance 100]
+    (->> (iterate digit-squares-sum number)
+         (map vector (range tolerance))
+         (take-while (fn [[i sum]] (not= 1 sum)))
+         (exceeded-tolerance? tolerance))))
+
+;; https://4clojure.oxal.org/#/problem/92
+;;
+;; IN PROGRESS: first I'll try to solve it for numbers < 100 and then
+;; generalize.
+(defn parse-roman-numeral [roman]
+  (let [table {:X 10, :V 5, :I 1}
+        lookup (fn [key] (key table))
+        char->keyword (fn [ch] (keyword (str ch)))]
+    (->> roman
+         (map (comp lookup char->keyword))
+         (reduce (fn combine [n1 n2]
+                   ) 0)
+         )))
+
+(comment
+  "test cases and scratch area"
+
+  (defn debug [exp] (prn exp))
+
+  [(parse-roman-numeral "XIV") :is 14
+   (parse-roman-numeral "XIX") :is 19
+   (parse-roman-numeral "DCCCXXVII") :is 827
+   (parse-roman-numeral "MMMCMXCIX") :is 3999
+   (parse-roman-numeral "XLVIII") :is 48]
+
+  [(happy-number? 7)
+   (happy-number? 986543210)
+   (happy-number? 2)
+   (happy-number? 3)])
