@@ -254,29 +254,38 @@
          (exceeded-tolerance? tolerance))))
 
 ;; https://4clojure.oxal.org/#/problem/92
-;;
-;; IN PROGRESS: first I'll try to solve it for numbers < 100 and then
-;; generalize.
+;; First hard problem I solved all on my own :D
 (defn parse-roman-numeral [roman]
-  (let [table {:X 10, :V 5, :I 1}
+  (let [table {:M 1000, :D 500, :C 100, :L 50, :X 10, :V 5, :I 1}
         lookup (fn [key] (key table))
-        char->keyword (fn [ch] (keyword (str ch)))]
+        char->keyword (fn [ch] (keyword (str ch)))
+        resolve-pairs (fn [[n1 n2]]
+                        (cond
+                          (= [n1 n2] [n1 nil]) n1
+                          (> n1 n2) (- n1 n2)
+                          :else (+ n1 n2)))]
     (->> roman
          (map (comp lookup char->keyword))
-         (reduce (fn combine [n1 n2]
-                   ) 0)
-         )))
+         reverse
+         (partition-all 2)
+         (map resolve-pairs)
+         (apply +))))
 
 (comment
   "test cases and scratch area"
 
-  (defn debug [exp] (prn exp))
+  (defn dbg [exp] (prn exp) exp)
 
-  [(parse-roman-numeral "XIV") :is 14
-   (parse-roman-numeral "XIX") :is 19
-   (parse-roman-numeral "DCCCXXVII") :is 827
-   (parse-roman-numeral "MMMCMXCIX") :is 3999
-   (parse-roman-numeral "XLVIII") :is 48]
+  [(parse-roman-numeral "XIV")
+   :is 14
+   (parse-roman-numeral "XIX")
+   :is 19
+   (parse-roman-numeral "DCCCXXVII")
+   :is 827
+   (parse-roman-numeral "MMMCMXCIX")
+   :is 3999
+   (parse-roman-numeral "XLVIII")
+   :is 48]
 
   [(happy-number? 7)
    (happy-number? 986543210)
