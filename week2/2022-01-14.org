@@ -1,0 +1,43 @@
+#+TITLE: 2022-01-14
+
+* What did I do today
+- Took it easy like a half day. Spent all of my time reading The Pragmatic Programmer.
+* What will I do on Monday
+- If I get the time, and if anyone is available, I'll pair with someone and try to work out A* search in Clojure.
+- Branch out of 4clojure into something more ✨real world✨.
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+** The Pragmatic Programmer
+- *Prototypes, in a nutshell*
+  - Need not be code
+  - Can ignore completeness, correctness, robustness or style
+  - Use them to figure out high-risk or unproven components
+  - Don't actually deploy the prototype, see instead: tracer bullet development
+- Questions that should be answered when using prototypes
+  - Are responsibilities, and collaboration of components well defined?
+  - Is coupling minimised?
+  - Is there duplication?
+  - Are interfaces and constraints acceptable?
+  - Does every module have access to the relevant data, when it needs it during execution?
+- Domain Specific Languages
+  - Helps program close to the problem domain
+  - Types: internal, external (from scratch), external (reusing a format, like YAML)
+- *Estimating models*
+  - Convey in the units that match your precision, give ranges based on contingencies
+  - Bother mostly with the major effects, ie, multiplicatives over additives
+  - Best estimates often come from those who have done a similar thing before
+  - Break model into components, which will have parameters, give values to these parameters
+  - Keep track of how well you did
+- *Estimating schedules*
+  - Develop iteratively and make the estimate more accurate with each iteration.
+  - The best answer: "I'll get back to you"
+- *Debugging 101*
+  - Don't Panic, Don't Blame
+  - Make the bug reproducible, ideally with a single command
+  - Read the damn error message
+  - Bisect stacktraces and releases
+  - Log and trace
+  - Rubber ducking
+  - =select= isn't broken
+  - Don't assume a component works, prove it
