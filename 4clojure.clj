@@ -292,10 +292,53 @@
          (map resolve-pairs)
          (apply +))))
 
+;; https://4clojure.oxal.org/#/problem/91
+;;
+;; FIXME: doesn't work.
+;; A better solution than walking the graph and seeing if visited nodes
+;; are the same as set of edges is to check Euler's Theorem instead, ie:
+;; A connected graph has an euler cycle iff every vertex has even degree.
+;;
+;; maybe something like: (->> edges flatten frequencies vals filter-even even?)
+(defn fully-connected-graph? [edges]
+  (let [connected? (fn [[a b] [x y]]
+                     (or (= a x) (= a y) (= b x) (= b y)))
+        neighbours (fn [curr-edge visited]
+                     #_(dbg curr-edge)
+                     #_(dbg edges)
+                     (filter (fn [edge]
+                               (and (not= curr-edge edge)
+                                    (not (visited edge))
+                                    (connected? curr-edge edge)))
+                             edges))
+        visited #{}
+        walk (fn walk [edge visited]
+               (println "---")
+               (print "for ") (dbg edge)
+               (dbg visited)
+               (dbg (neighbours edge visited))
+               (cond
+                 (empty? (neighbours edge visited)) (= visited (set edges))
+                 :else (some true? (map (fn [next-edge]
+                                          (walk next-edge (conj visited next-edge)))
+                                        (neighbours edge visited)))))]
+    (walk (first edges) (conj visited (ffirst edges)))))
+
 (comment
   "test cases and scratch area"
 
   (defn dbg [exp] (prn exp) exp)
+
+  [(= true (fully-connected-graph? [[:a :b]]))
+   (= false (fully-connected-graph? [[:a :a] [:b :b]]))
+   (= false (fully-connected-graph? [[:a :b] [:a :b] [:a :c] [:c :a]
+                                     [:a :d] [:b :d] [:c :d]]))
+   (= true (fully-connected-graph? [[1 2] [2 3] [3 4] [4 1]]))
+   (= true (fully-connected-graph? [[2 3] [1 2] [4 3] [5 2] [5 4]]))
+   (= true (fully-connected-graph? [[:a :b] [:a :c] [:c :b] [:a :e]
+                                    [:b :e] [:a :d] [:b :d] [:c :e]
+                                    [:d :e] [:c :f] [:d :f]]))
+   (= false (fully-connected-graph? [[1 2] [2 3] [2 4] [2 5]]))]
 
   [(parse-roman-numeral "XIV")
    :is 14
