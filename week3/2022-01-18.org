@@ -1,0 +1,12 @@
+#+TITLE: 2022-01-18
+
+* What did I do today
+- Set up CI (and CD, kinda) for record-linkage
+- Wrote the CSV parser
+* What will I do tomorrow
+- Deploy a minimum viable version of the record-linkage tool
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+- The basics of setting up CI (and CD, kinda) on GitHub Actions
+- Clojure I/O (enough to parse and process CSV files)
