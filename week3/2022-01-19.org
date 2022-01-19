@@ -1,0 +1,20 @@
+#+TITLE: 2022-01-19
+
+* What did I do today
+- Delivered a minimum working artifact for record linkage
+- Wrote clojure tests for the first time
+* What will I do tomorrow
+- Start (and if time permits, finish) working on a more generic record linker
+- Read about property-based testing
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+** Pairing session with Govind
+- Tradeoffs between handwritten unit tests and property-based generative tests
+  - Handwritten unit tests: easy to write, better conveys intent of program, but you can't account for most cases
+  - Generative tests: less easy to reason about properties, generator has to be designed generate data in ways that are useful to the program, can't be totally random
+- A nice way of organizing code is to have the messy side effects at the boundaries, while keeping the core purely functional.
+  - Generalization: onion architecture
+** Catch-up with Kiran + Prabhanshu
+- Discussions on testing style and readability (and the TDD word)
+- Arrange, act, assert
