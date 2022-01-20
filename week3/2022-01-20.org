@@ -1,0 +1,13 @@
+#+TITLE: 2022-01-20
+
+* What did I do today
+- Created a properly validated CLI interface for record-linkage
+- Reimplemented record linking logic to be extendible to arbitrary comparators, ie, compound fields and fuzzy matchers, if someone bothered implementing one.
+* What will I do tomorrow
+- Get my code reviewed
+- Read about property-based testing
+* Blockers
+- I could not yet make a PR for the new linking logic, because I wanted my CLI merged and reviewed first. Then I can add options to support compounding fields.
+* What I learned today (+ comments on the same)
+- Hardly anything new, just some practice of writing Clojure.
+- If it counts, I learnt how to use the CLI parsing library from clojure.tools
