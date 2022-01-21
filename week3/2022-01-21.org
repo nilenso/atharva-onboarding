@@ -1,0 +1,11 @@
+#+TITLE: 2022-01-21
+
+* What did I do today
+- Catch-up with Prabhanshu, which turned into a productive micro-pairing session
+- Read about property-based testing, by looking at the clojure.spec docs
+* What will I do on Monday
+- Get my code reviewed
+* Blockers
+- nah
+* What I learned today (+ comments on the same)
+- Clojure's spec API and how it can be used for generative testing.
