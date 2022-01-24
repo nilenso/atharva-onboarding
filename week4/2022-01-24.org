@@ -1,0 +1,17 @@
+#+TITLE: 2022-01-24
+
+* What did I do today
+- Read about the 12-factor app
+- Read about the Ring library
+- Rerolled my CLI branch after reviews by Prabhanshu and Sezal
+- Started work on integrating CLI with new algorithm
+- Paired with Srihari, catch-up with Kiran + Prabhanshu
+* What will I do tomorrow
+- Finish integrating a CLI interface for compound matching case
+- Get my first iteration of the completed record-linkage problem reviewed
+- Propose a way to split up the application into different modules
+* Blockers
+- nope
+* What I learned today
+- [[12factor.net]]
+- Ring: Handlers, middlewares, web programming basics.
