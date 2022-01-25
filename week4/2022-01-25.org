@@ -1,0 +1,41 @@
+#+TITLE: 2022-01-25
+
+* What did I do today
+- Finished up my draft PR for more generic record linking
+- Attended standup
+- Brainstormed webdev project ideas with Kiran and Prabhanshu
+* What will I do (day after) tomorrow
+- Flesh out webdev project ideas
+  - AD: I want to prioritize on ideas that will stretch my data modeling and system design muscles. Feel free to chuck ideas at me :)
+- Reorganize my code, and add more exhaustive testing to record linkage
+* Blockers
+- Need review for: https://github.com/nilenso/atharva-record-linkage/pull/9 so I can go and reorganize my project.
+* What I learned today (+ commentary on the same)
+- Learnt this technically a few days ago, but I never wrote it down, so
+  A lazy man's one-liner guide to the 12 factors (for making SaaS apps):
+  1. Codebase: Sanity is to maintain one version of your codebase, and have many deploys (eg: dev, qa, prod).
+  2. Dependencies: Declarative dependencies only, explicitly name everything, and have them be used in isolation.
+  3. Config: Environment variables master race.
+  4. Backing Services: Every backing service should be attached resource with a handle (usually, urls).
+  5. Build, release, run: Keep them strictly separated.
+  6. Processes: Apps should be one or more stateless, shared-nothing processes.
+  7. Port binding: Export services via port binding (*Q*: Is there even any other way to export a service?¿?¿).
+  8. Concurrency: Scale out (ie, horizontally) using the process model.
+  9. Disposability: Start fast, die gracefully.
+  10. Dev/prod parity: Should be as small as possible—use the same stuff in dev and prod, pls.
+  11. Logs: Should be event streams, ie, dump to stdout and let some other service handle it.
+  12. Admin processes: Should be one-off, part of the code and run in an identical environment as the processes.
+- Discovered ~Hiccup~: Looks like a Clojure's equivalent to Racket's [[https://docs.racket-lang.org/xml/index.html][xml]] library, ie, HTML is Lisp, let's represent it that way.
+- HoneySQL: Looks like Clojure's equivalent to Racket's [[https://docs.racket-lang.org/deta/index.html][deta]] library. I know Rich Hickey hates ORMs, would this fall into that category?
+- Middlewares: I like the idea of threading functionality together like this. This chaining structure reminds me of the M-word.
+- Mini rant: I dislike the opening line of ~Ring~'s README. \\
+  "Ring is a Clojure web applications library inspired by Python's WSGI and Ruby's Rack."
+
+  Assumes I am familiar with either of those. Imagine if we described everything like this.
+
+  "Go is a language inspired by ALGOL." \\
+  "async-await is a feature that is inspired by the do notation for m*nadic chaining of Scheme-like continuation-passing style."
+
+  I get that it helps to compare an existing popular thing to let experienced devs quickly know what something is, but maybe do that after describing what your thing is, and what it is used for before going there. \\
+  /endrant
+- [[https://stuartsierra.com/2016/01/09/how-to-name-clojure-functions][Naming things in Clojure]]: haha, I broke half the guidelines here on record linkage. No wonder Srihari shared this with me. This guide was loose with the rules, because naming things is hard (I remember going through ~4-5 iterations of reviews in the Git mailing list to essentially figure out how to name my functions). Also this guide was good, but also slightly irritating to my Racket sensibilities, where the conventions are different in many ways. I'll get used to it.
