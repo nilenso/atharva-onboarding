@@ -1,0 +1,37 @@
+#+TITLE: 2022-01-27
+
+* What did I do today
+- Code review + Pairing with Sezal
+- Brainstormed some webdev project ideas on my own
+- Attended Yogi's review
+- Wrote my first spec
+* What will I do tomorrow
+- Reorganize and hopefully wrap up record-linkage
+- Finalize webdev project
+* Blockers
+- nope
+* What I learned today (+ commentary on the same)
+** Pairing with Sezal
+- Naming things is hard, and what contributed to my code being hard to read.
+- I particularly liked the suggestion for making my reduction look readable. My original reduce call had this form:
+  #+begin_src clojure
+  ;; do-some-voodoo is accumulating stuff in the initial map we pass to it
+  (reduce (partial do-some-voodoo arg) {} thing-to-reduce)
+  #+end_src
+  Which got refactored to something like:
+  #+begin_src clojure
+  (reduce (fn [accumulated-thing record]
+            (merge accumulated-thing (some-voodoo arg))) {} thing-to-reduce)
+  #+end_src
+  That way it's easy to see what and how something is getting reduced, while still not having a bulky function.
+- She also showed me another way to approach the problem with linear time complexity which was neat.
+** Commentary: A general pattern that has emerged from pairing
+Over the last two weeks I have started pairing with people, and I feel a pattern emerging.
+
+For example today, when I paired with Sezal, she asked me through go through the code. As I start going through the functions, I start thinking (or saying out loud), "oh yeah, this function is pretty hard to read. Oh, this name makes no sense.", and I basically start reviewing myself. It all probably looks silly. If I knew this, why didn't I fix it before the review?
+
+The issue seems to be that I don't rewrite code. I write it once, get it to work, and while I am writing it, it makes sense to me. So I leave it at that. But when I look at it the next day, all the horrors of unreadability are suddenly clear to me. If I rewrite code before the reviews, it would save a lot more time for everyone.
+
+I think even making another pass at the code immediately after I am done writing it will catch a lot of the readability issues that emerge. I kept a rubber duck on my gather desk, but I don't use it enough. Maybe I should have a duck on my actual desk so that I remember to use it after every piece of functionality I write.
+
+Question for people who have paired with me: Would you agree with my self-assessment? Anything else you would like to add to it?
