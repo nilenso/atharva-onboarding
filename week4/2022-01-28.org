@@ -1,0 +1,15 @@
+#+TITLE: 2022-01-28
+
+* What did I do today
+- Narrowed down to two webdev project ideas
+- Attended Shivam's review
+- Saw John Hughes get really excited about tests
+* What will I do on Monday
+- Decide on the webdev project and write the user stories
+* Blockers
+- nope
+* TIL (+commentary)
+- Saw John Hughes talk on property-based testing that Srihari had recommended to me. It gave me a better picture of how it's actually used in practice which was nice.
+- Clojure's spec guide also has a portion which confused me. I don't fully understand the relationship between clojure's properties and generator libraries, the spec library and =test.check=. There is definitely some overlap. I wish there was some guide that lays it all out and talks about the tradeoffs and differences, similar to [[https://github.com/plumatic/eng-practices/blob/master/clojure/20130926-data-representation.md][this one about data types and polymorphism]].
+* Catch-up with Kiran + Prabhanshu
+- We narrowed down to two ideas, the braindump outline can be found [[https://docs.google.com/document/d/1yrItd7PuqgAIGSMIG_7eNz5EndYzP6ZTp53_j9rIMxY/view#heading=h.l1pmmmytwq8e][here]]. Let me know your thoughts on the two projects :)
