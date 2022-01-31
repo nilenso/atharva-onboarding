@@ -1,0 +1,27 @@
+#+TITLE: 2022-01-31
+
+* What did I do today
+- Fiddled with property-based testing on record-linkage
+- Fleshed out webdev project idea
+* What will I do tomorrow
+- Finalize on the webdev project and write the user stories
+* Blockers
+- nope
+* TIL (+commentary)
+- Caved in and tried to do property-based testing on record-linkage. Now I see why this is great. I discovered an edge case bug(??) in my implementation. It's not exactly a "bug" in the sense that my algorithm is broken, rather it brought up a design consideration that I hadn't factored in before.
+  Assuming the records:
+  #+begin_src clojure
+  [{:a 0, :b "", :c "\b"}
+   {:a 0, :b "dhl", :c ""}
+   {:a 0, :b "", :c ""}
+   {:a 0, :b "", :c ""}]
+  #+end_src
+  I want to match records having the same =:b= field OR =:c= field.
+
+  What ID should that last record get? Should it get the ID that the first record is assigned (because =:b= field matches), or should it get the ID the second record is assigned (because =:c= field matches)? My implementation gave it the ID of the former, but this was not a deliberate decision, it just happened to be incidental.
+
+  Everywhere I read, testing gets praised a lot for making you think more carefully about your problem. Property-based testing has been just that, but on steroids. Thx John Hughes.
+
+  Update: Sandy pointed out that all of these records should have the same ID, through a transitive match. If you look at the domain this problem is for (ie, matching patients) we assume that our even if an OR match is indirect, it's the same patient at the end of the day.
+* Catch-up with Kiran + Prabhanshu
+- We are leaning towards the data collection API idea (outline [[https://docs.google.com/document/d/1yrItd7PuqgAIGSMIG_7eNz5EndYzP6ZTp53_j9rIMxY/view#heading=h.l1pmmmytwq8e][here]]), but we realised the problem can really blow up in scope once we started thinking about it more deeply. Depending on how you look at it, it could be a no-code platform/airtable to a basic Google form clone. Because of this we did not finalize it yet, but we'll weigh the alternatives tomorrow and make a final decision.
