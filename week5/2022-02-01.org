@@ -1,0 +1,31 @@
+#+TITLE: 2022-02-01
+
+* What did I do today
+- Finalized web dev project and wrote user stories for it with Kiran and Prabhanshu
+- Read about web development (in general, as well as Clojure-specific)
+* What will I do tomorrow
+- Make architectural decisions for the project
+- Start working towards the first user story
+* Blockers
+- nope
+* TIL (+commentary)
+** Trying to understand Web Apps
+I have a very swiss cheese understanding of Web application programming in general. I always got knowledge about it in fragmented pieces, and because of that I never felt confident in my understanding of how modern web applications even work.
+
+My previous encounters with web application programming was in frameworks like Flask, or seeing other people use ExpressJS. While I saw how people put things together, these frameworks seem "too magical" in that I have no clue how writing a bunch of functions and routes translate to a webpage on the localhost instance. How does that relationship work in deployment? What is actually happening in all those layers.
+
+I shall now attempt to write down what I already know here as an exercise to expose where I have knowledge gaps, and figure out why I don't feel confident. Pardon me if this is verbose.
+
+*** Web Apps in a nutshell??
+- There are clients and servers. Client has an application that requests stuff, and server has an application that reads a request and gives the response to the client. For web applications, HTTP is the protocol at the application layer.
+- Client app: (Some kind of) browser
+- Server app: A web server software
+  - It listens for TCP connections (via sockets?) and receives the HTTP request payload. Does a lot of fancy stuff to make it performant. Many of them(?) can serve static content straight away.
+  - Eg: Apache httpd, Jetty(?), Tomcat(?), Aleph(?), http-kit(?), nginx(???)
+    - Jetty and Tomcat seem to be servers that run Java Servlets, ie, it's like an Apache but with Java stuff as the only gateway?
+  - To make it serve dynamic content (ie, web apps that we write) it needs to support some "gateway interface".
+    - CGI (old skool), language-specific like WSGI, Rack and Ring(??)
+      - Ring: the thing that bridges the web server application to the web application handler functions that we write.
+        - We need a way to match the path in the HTTP requests to map to a handler function that does fancy dynamic things. This is what routing libraries are for?
+    - Our web app essentially manages business logic and state (by connecting to some DB) and returns an appropriate response to an action. (Eg: JSON for REST calls or HTML for interactive web apps)
+- What do local development servers do (eg, when running Flask locally)? Are they pretending to be Apache, but without the gateway ceremony?
