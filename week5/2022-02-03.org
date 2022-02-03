@@ -1,0 +1,28 @@
+#+TITLE: 2022-02-03
+
+* What did I do today
+- Setup CI for staging and deploying my project
+- Decide on the next few user stories
+* What will I do tomorrow
+- Start working towards the next 3 user stories
+* Blockers
+- nope
+* TIL (+commentary) (includes yesterday's stuff)
+** Commentary: Making stack choices
+Making stack choices, especially for a Clojure webdev project is hard. There's way too many options and I want to make informed choices with a clear rationale rather than go with what's popular. Unfortunately every time I try to look at my options, I am a bit overwhelmed. All roads lead to a rabbithole of documentation and opinions. I am not clear about the tradeoffs I want to make.
+
+Eg: There are 5 different routing libraries, at least 3 popular component lifecycle management libraries (do I need one?), many databases, many web servers (jetty or http-kit or aleph? what about Ring?), configuration management (environ or aero or what-have-you) etc.
+
+This is where the utility of opinionated guides are. Unfortunately, I could not really find any.
+
+Ideally I want to start as manual as possible and only really upgrade to a library once it gets borderline tedious. Maybe I will only start with a routing library and Ring.
+** Docker
+I finally decided to have a proper sit-down and learn about Docker and how it is used in practice. I deployed my app as a Dockerized container.
+
+The Docker 101 tutorial (packaged with the docker install itself) seemed to imply that devs should always run the dockerized app during development. The setup they showed was to setup persistence using volumes along with a binding mount on the code (which in their example is used to propagate the code changes to the container using =nodemon=). And since doing this with a multicontainer setup is cumbersome, you should use docker-compose to automate spinning up these containers.
+
+...Do developers actually do this in practice? It seems like a lot of work. Maybe on a complex and large application this would make sense, but I generally dislike fiddling with setups and this seems to get in the way of a nice, tight feedback loop.
+
+Besides, how would this work in Clojure? I still want my REPL driven development, would that even be possible if my web app has been dockerized? It's all still fuzzy in my head.
+** One month at nilenso
+it's been great
