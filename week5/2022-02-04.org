@@ -1,0 +1,32 @@
+#+TITLE: 2022-02-03
+
+* What did I do today
+- Add caching to CI
+- Created landing page for the web app
+- Attended book club
+* What will I do on Monday
+- Setup routing and start working on connecting to a database
+* Blockers
+- nope
+* TIL (+commentary)
+** What is a card?
+Today I was talking to Kiran about a dilemma I was having about project management. Basically: should this be a card? It wasn't a very simple question for me to answer, because there are some non-story tasks that I need to do, but don't really belong to a particular story. \
+Examples: setting up CI, refactoring, connecting to a database (since many stories would need this), etc. These tasks are non-trivial, atomic and yet do not contribute to a user story. Should these be in its own card?
+
+Since many organizations do this a bit differently, the basic heuristic we converged on is:
+- Even if a thing to do is independent of a story, we will assign it as a task to the first story that requires it.
+- It's okay not to do this for the first few tasks /before/ starting a project, eg: setting up CI.
+
+** Joy of Clojure book club
+Talked about laziness. Got a few things clarified about its fundamental benefits.
+
+Why laziness?
+- We don't have to realize a computation in memory until we need it. Example:
+  #+begin_src clojure
+(->> patient-records                      ; 10000 records here
+     (filter #(> (:heart-rate %) 100))    ; in-memory -> nothing allocated
+     (map #(assoc :status "at risk" %))   ; in-memory -> nothing allocated
+     (take 8))                            ; in-memory -> eight items allocated
+  #+end_src
+  If this were eagerly computed we would have 10000 records created at each stage, which means 40000 records created. But because it's lazy, we only generate 8 records at the end.
+- Infinite sequences are possible like ~(range)~ or ~(iterate dec 0)~, which are a nice abstraction and makes programs easy to reason about.
