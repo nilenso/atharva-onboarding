@@ -1,0 +1,27 @@
+#+TITLE: 2022-02-06
+
+* What did I do today
+- Create routes for the Bugle forms
+- Read about sessions in Ring
+* What will I do tomorrow
+- Get my work reviewed and merged
+- Start working on connecting to a database
+* Blockers
+- nope
+* Commentary
+** Async handlers: What's the use case?
+I noticed that Ring allows you to define asynchronous handlers. I was not too sure about the use case. Most tutorials pretty much only cover synchronous handlers.
+
+I also have a more general question. What's the tradeoffs with asynchronous web libraries? I have noticed many libraries in Clojure (at least Ring) seem to "favour" a synchronous approach. Some other languages use a callback/async-await mechanism as the default (I believe Node libraries are like this?).
+
+Searching for this did not lead me to satisfying answers, but a lot of hard-to-follow threads. I'd love to know the thoughts from those who have worked with both paradigms.
+** Reloading Pains
+Just as my web development project started growing beyond a single file, I already started hitting workflow inconveniences. My main issue is this—I edit 3-4 files located in different directories in my source path. In order for these changes to be reflected on my local server restart, I have to remember to go to each buffer I changed and reload everything. Not only is this tedious, but also error-prone because I am likely to forget reloading a changed file.
+
+I tried to look into how to deal with this but I was immediately overwhelmed with many (potentially overlapping) options:
+- clojure.tools.namespace (documentation is not that great to quickly get started with whatever use case I need. Maybe I should be looking harder?)
+- lein-ring plugin
+- ring-devel's wrap-reload middleware
+- component lifecycle libraries like =mount= which are to be used with one of the above?
+
+My question: Without having to spend an hour to read about every library's philosophy or API specs or whatnot, how do I setup a workflow where I don't have to recompile every file I changed? What do you personally use to deal with this issue?
