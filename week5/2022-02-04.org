@@ -1,4 +1,4 @@
-#+TITLE: 2022-02-03
+#+TITLE: 2022-02-04
 
 * What did I do today
 - Add caching to CI
