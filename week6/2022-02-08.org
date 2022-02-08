@@ -1,0 +1,35 @@
+#+TITLE: 2022-02-08
+
+* What did I do today
+- Learnt about migrations
+- Attended standup
+* What will I do tomorrow
+- Work on setting up the database and migrations
+- Pair with Udit
+* Blockers
+- nope
+* TIL (+ commentary)
+** Migrations
+The imbalances in programming guides on the internet rears its head again. I was surprised by how hard it was to learn about something as simple and basic as database migrations. All you get is bits and pieces, usually from library documentation that assumes I already know everything about migrations in some other framework.
+
+I'll find thousands of guides on these topics (rewritten on Medium by every Tomar, Deepti or Hari):
+- How to use =git reflog=
+- What is Kubernetes, and how to setup your own cluster
+- How to write your own Neural Network from scratch
+- Async and Await explained in JavaScript [[https://jvns.ca/blog/confusing-explanations/#pattern-3-strained-analogies][by making Pizza]]
+...etc
+
+On the other hand, I'll find nothing on certain topics, like migrations[fn:1]. Given that this is a fairly common thing, often more fundamental than any of the above examples, I was surprised I couldn't find much information. In fact almost all the sources I read failed to even tell /what/ is being migrated and /why/ is this needed. Just a how-to involving writing some SQL scripts for some contrived example.
+
+I somehow pieced together a more-or-less complete picture by frown-reading through Rails and Go's docs for migration libraries, along with asking Kiran questions about what is happening.
+
+[fn:1] Other topics that get scarce coverage relative to how common they are: CI/CD workflow patterns, why does =rebase= exist (and how to use it effectively without ripping your hair out), how to choose a tech stack pragmatically, how and when to use certain editor features for X language, etc.
+
+*** Migrations: extremely tiny summary that at least tells /what/ and /why/
+Database migrations are used for managing changes to the structure of your database (it does not manage the data itself). These frameworks keep the state of the database structure in sync with what the code expects.
+
+Without migrations, if I add a feature that requires a new table, all developers who collaborate with me will have to remember to manually add the table to their local database instance if they wanted to try out my feature. Cumbersome and unscalable.
+
+By using a migration framework, this won't be an issue. Along with my code changes, I also supply a script (often, SQL) which gives instructions for how to go from the current database structure to the one my new code expects. Most libraries also expect a complementary script that tells how to reverse that state (this enables rolling back migrations).
+
+Now other developers can run the migrate command which is essentially "applying" the alterations to the database. And now they can try out my new feature.

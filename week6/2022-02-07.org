@@ -1,4 +1,4 @@
-#+TITLE: 2022-02-06
+#+TITLE: 2022-02-07
 
 * What did I do today
 - Create routes for the Bugle forms
