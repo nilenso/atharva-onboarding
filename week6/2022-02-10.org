@@ -1,0 +1,18 @@
+#+TITLE: 2022-02-10
+
+* What did I do today
+- Setup migrations
+- Display sign up form
+* What will I do tomorrow
+- Store sign up details in database
+* Blockers
+- nope
+* TIL + YIL (+ commentary)
+** Pairing with Udit (yesterday)
+- I learnt about good practices when setting up a database, which I'd summarize as:
+  - Make your database setup easily reproducible by other developers—we did this using docker-compose and migrations (using migratus)
+  - Have clearly separated configuration profiles—we used aero to make this seamless
+- Learnt misc things about connecting to a database in the Clojure ecosystem, eg, jdbc and use of db specs.
+** Catch-up with Prabhanshu
+- He gave me hints about how to approach user authentication—sessions is not the only way. \
+  My task will now be to figure what is the most suitable way to authenticate for our use case.
