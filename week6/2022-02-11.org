@@ -1,0 +1,69 @@
+#+TITLE: 2022-02-11
+
+* What did I do today
+- Write an ADR for auth mechanisms and discuss it with onboardees
+- Joy of Clojure book club
+- Farewell, Soumya
+- Saw tramline demo
+* What will I do on monday
+- Implement sign ups and put it up for review
+* Blockers
+- nope
+* TIL + YIL (+ commentary)
+** Joy of Clojure book club: laziness redux
+- I discussed the implementation of ~delay~ and ~force~. Laziness in Clojure is implemented by returning a function that will call the body to be ~delay~'d. ~force~ simply invokes this function. This same principle seems to be at play for ~lazy-seq~. Here's a more detailed description, taken from my Slack message at #winter-onboarding:
+  #+begin_quote
+  Re: Friday's book club discussion. I opened the guts of Clojure to see how laziness is implemented, and it turns out, it is indeed (almost) as simple as wrapping the body in a new function!
+
+  Eg: [[https://github.com/clojure/clojure/blob/326366d11923620f6815cfd149300bb48da01593/src/clj/clojure/core.clj#L748-L756][Delay]] is a macro that wraps the body of expressions in an fn (it uses fn* which calls the internal implementation of functions in Java).
+
+  On the other side, you can see the [[https://github.com/clojure/clojure/blob/d56812cf2e9f7a317f9b603ef4c9f07bf1bed281/src/jvm/clojure/lang/Delay.java#L26-L55][implementation of force]] as well, which literally calls the function that we wrapped earlier and returns that value. Similarly for lazy-seq, the thunk that is used to decide the next value to realize [[https://github.com/clojure/clojure/blob/b1b88dd25373a86e41310a525a21b497799dbbf2/src/jvm/clojure/lang/LazySeq.java#L39-L48][is also a function]]. So at least for Clojure, when laziness is achieved through wrapped function calls, ie, a more robust form of:
+
+  (defn my-delay [expr] (fn [] expr))
+  #+end_quote
+- Alisha demonstrated the lazy quicksort algorithm implemented in /The Joy of Clojure/. It's a beautiful and a sophisticated use of laziness.
+  #+begin_src clojure
+(defn sort-parts [work]
+  (lazy-seq
+   (loop [[part & parts] work]
+     (if-let [[pivot & xs] (seq part)]
+       (let [smaller? #(< % pivot)]
+         (recur (list*
+                 (filter smaller? xs)
+                 pivot
+                 (remove smaller? xs)
+                 parts)))
+       (when-let [[x & parts] parts]
+         (cons x (sort-parts parts)))))))
+  #+end_src
+  Here's how the program evolves when you run: =(take 4 (sort-parts (list [4 2 23 5 36 1 72 14 22 11 55 24 76])))=
+
+#+begin_src
+;; partitions around pivot 4
+=> ((2 1) 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; partitions around pivot 2 in the first sublist
+=> ((1) 2 () 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; nothing more to partition on the leftmost part → cons the first element with
+;; the result of sorting the rest
+=> (() 1 () 2 () 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; three more iterations will realize '(1 2 4), the rest being:
+=> ((5 14 22 11) 23 (36 72 55 24 76))
+=> (() 5 (14 22 11) 23 (36 72 55 24 76))
+
+=> ;; realized: '(1 2 4 5)
+#+end_src
+
+  It takes a while to sink in, but the amazing thing is that it only sorts just enough to take the number of items we request. The authors have unified quicksort and [[https://en.wikipedia.org/wiki/Selection_algorithm][quickselect]].
+  - This is slightly different from quickselect in that we take the first n smallest numbers rather than the nth smallest number.
+** Discussion: authentication and user identification methods
+I was a bit overwhelmed by the many ways to implement user identification and decided to write an [[https://github.com/nilenso/bugle-forms/blob/adr001/doc/arch/adr-001-sessions-for-auth.md][ADR]] to capture the decision I was leaning towards for Bugle Forms. Check that out to see what I learnt about auth, I won't be repeating it here (it's already getting lengthy here). Govind suggested that I check with the winter onboardees to get some opinions, as they had a structured discussion around this before.
+
+The general suggestions I got was this:
+- Client side sessions don't provide much benefit for my web app, especially because it is always accessed by a browser. The downside is dealing with logouts and the extra work with getting JWTs right, compared to Ring Sessions.
+- They did not like my proposal to store the sessions in memory, as it would wipe the sessions on every restart, which I agree is bad. What I intend to do is implement it in memory and get it to work first. After that I will move it to a persistent external store, by implementing the ~SessionStore~ protocol provided by Ring. Doing it this way means I'll never have to touch the application logic for handling sessions no matter where I store it.
+- I also asked why the winter onboardees used the cookie middleware for implementing the session store instead of using the ~SessionProtocol~. Shivam and Yogi had tried doing that in a time-box, but they could not get it to work due to some logical errors. Despite this potential obstacle, I really want to do it with the session middleware, because I feel like it is the most correct way to do this.
+** Tramline Demo Session
+- Even though this was essentially a pitch for tramline, I felt like a learnt a lot about development workflows in a mobile team, especially from the [[https://docs.simple.org/engineering/android/deploying-to-play-store][Simple Doc]] about releases that was shared. I was surprised by how manual the whole thing is.
