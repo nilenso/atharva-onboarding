@@ -1,0 +1,16 @@
+#+TITLE: 2022-02-14
+
+* What did I do today
+- Paired with Dan
+- Finalized on auth ADR
+- Set up database on the Heroku side
+* What will I do tomorrow
+- Finish sign up story
+* Blockers
+- nope
+* TIL (+ commentary)
+** Pairing with Dan
+- Dan showed me the =spy= function from scope capture, which is this neat debugging tool that lets you capture all the locals accessible to an expression.
+  - The functionality is somewhat overlapping with the CIDER debugger, but the advantage here is that I can run my program in a complete flow without breakpoints, and then observe these captured scopes afterwards.
+- He also showed me how to observe Java classes and the methods exposed by them, which is a nice way of understanding what a library might be doing. "The code never lies": \
+  ~(.getMethods (class library-thing)~
