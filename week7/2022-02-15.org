@@ -1,0 +1,23 @@
+#+TITLE: 2022-02-15
+
+* What did I do today
+- Implemented signup story
+- Attended Pratul's todoist session
+- Standup
+* What will I do tomorrow
+- Send signup story for review
+- Pick up login story
+* Blockers
+- nope
+* TIL (+ commentary)
+** Catch-up with Kiran
+- We discussed about error handling methods in Clojure. Kiran showed me the [[https://fsharpforfunandprofit.com/rop/][railway-oriented programming]] pattern which is a neat analogy that is basically a m*nadic pattern that I have seen elsewhere, but explained really nicely. Wish I had seen this earlier.
+  - As elegant as this is, he noted that there are tradeoffs to this, especially when used in Clojure, as people chain the error-producing functions with their own threading macro, and this can be confusing to people who are unfamiliar with the system.
+  - For now, because I don't want to reinvent the error monad or use libraries like =failjure=, I'll stick to wrapping an exception handler around my Ring handler.
+- I also noted that this pattern is a good example of abstraction that isn't merely indirection. Kiran recommended I check out Zach Tellman's talks about abstraction and also having a look at /Elements of Clojure/ (available in the nilenso library).
+** Pratul's todoist session
+- Getting Things Done (GTD) philosophy in a nutshell: /If it takes less than 2 minutes, do it now. If it takes more than 2 minutes, write it down/. The main reason behind this is we don't avoid breaking our flow state.
+- Issue with most todo apps: too slow, not easily accessible.
+- Ideally we want a system that lets us dump tasks with natural language scheduling so that we can free our short-term memory and batch up the other stuff later. It's also nice to have staggering of schedules and flexibility because we are only human.
+- My biggest issue with todo apps in the past has been remembering to actually go back and look at my todos. Pratul deals with this by having a reminder to check the todo itself, which is something I should try next time, until the habit builds.
+- Also important: It's actually not about emptying the todo list and getting the tasks done on time. It's really just about keeping an account of the boilerplate tasks of life, which helps us stay on top of things.
