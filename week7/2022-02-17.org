@@ -1,0 +1,96 @@
+#+TITLE: 2022-02-17
+
+* What did I do today
+- Proofread nilenso's new website
+- Read about next.jdbc API
+- Code review with Srihari
+* What will I do tomorrow
+- Address the review points and merge the story
+- Pick up login story
+* Blockers
+- Same as yesterday:
+  - The Heroku staging server seems to be broken because of some billing issue. This has blocked QA.
+* TIL (+ commentary)
+** Code review with Srihari (+ neena cameo)
+*** The feedback I received
+At the highest level, Srihari's feedback was that while my first-principles approach is generally a good thing, it is manifesting in weird ways in my web application. For example, I have created a model layer, but I am not using it in a way that takes abstracts all the model-related responsibilities from the controller. Another example was when I included structural validation, but at the wrong layer (more on this to come). I should consider picking up a book and reading about patterns in web programming to complement what I am doing.
+
+*** Different ways of abstracting a web app
+
+It was a productive 2-hour session, and I don't think I can write down everything else here, but we talked about two different philosophies for abstracting web applications.
+
+#+begin_src
+                (...)
+                  ▲
+                  │
+       ┌──────────┼───────────────────────────────────────┐
+       │          │                                 B     │
+       │    ┌─────┴────────┐          ┌───────────────┐   │
+       │    │ ┌───┐  ┌───┐ │          │               │   │
+       │    │ │   │  │   │ │          │     ┌─┐       │   │
+       │    │ │   │  │   │ │          │     └─┘       │   │
+       │    │ └───┘  └───┘ │          │          ┌─┐  │   │
+       │    │              │          │  ┌─┐     └─┘  │   │
+       │    │     ┌──┐     │          │  │ │          │   │
+       │    │     └──┘     |          |  └─┘          │   │
+       │    │              │          │               │   │
+       │    └─────────▲────┘          └─────────▲─────┘   │
+       │    C         │                         │         │
+       │              │                         │         │
+       │             ┌┴──────────────┐          │         │
+       │             │               │          │         │
+       │             │   ┌──┐   ┌──┐ │          │         │
+       │             │   │  │   └──┘ ├──────────┘         │
+       │             │   └──┘        │                    │
+       │             │        ┌──┐   │                    │
+       │             │        └──┘   │                    │
+       │             │               │                    │
+       │             └───────────────┘                    │
+       │                        A                         │
+       └──────────────────────────────────────────────────┘
+#+end_src
+
+The idea is that you have these boxes (A, B and C) with different components in them, and a good boundary is when
+- A, B and C /occasionally/ calls between each other
+- Their inner components /often/ call each other
+
+This is a sign that we have cleanly separated out the responsibilities. So A, B and C can be something like a Controller, View and Controller, with domain objects inside them, or maybe they could be domain objects with their own little MVCs inside them. Pick the scheme that gives you cleaner boundaries.
+
+Another important principle I learned was about defensive layering in a web application. Srihari showed a really neat diagram which is rather self-explanatory:
+
+#+begin_src
+
+            middleware1
+           ┌────────────────────────────────────────────────────────────┐
+           │       middleware2                                          │
+           │     ┌──────────────────────────────────────────────────┐   │
+           │     │                                                  │   │
+      structural │                                                  │   │
+      validation │          middleware3                             │   │
+           │     │         ┌─────────────────────────────────────┐  │   │
+           │     │         │                                     │  │   │
+           │  semantic     │                                     │  │   │
+           │  validation   │                                     │  │   │
+           │     │         │                 ┌────────────────┐  │  │   │
+           │     │       domain              │                │  │  │   │
+           │     │       validation          │     The        │  │  │   │        ┌────────────┐
+ Incoming  │     │         │                 │     actual     │  │  │   │        │            │
+ Request   │     │         │                 │     business   │  │  │   │        │            │
+ ──────────┼─────┼─────────┼────────────────►│     logic      └──┼──┼───┼────────►  Database  │
+           │     │         │                 │                ◄──┼──┼───┼────────┐            │
+           │     │         │                 │i don't care    │  │  │   │        │            │
+           │     │         │                 │about data pains│  │  │   │        └────────────┘
+           │     │         │                 └────────────────┘  │  │   │
+           │     │         │                                     │  │   │
+           │     │         │                                     │  │   │
+           │     │         └─────────────────────────────────────┘  │   │
+           │     │                                                  │   │
+           │     └──────────────────────────────────────────────────┘   │
+           │                                                            │
+           └────────────────────────────────────────────────────────────┘
+         (we can also substitute "validation" with "coercion")
+
+(I used asciiflow to make these diagrams)
+#+end_src
+*** Misc
+We also talked about other stuff, like mocking a database (Srihari is generally not a fan of this, and with a few exceptions, prefers actually deploying a test DB and verifying it). His main argument is these days, database choice are very much a part of an application's arch decision and there is no point in pretending that they are swappable, which is what we are doing by mocking them in the tests. Let the DB be the part of the unit along with the DB layer.
