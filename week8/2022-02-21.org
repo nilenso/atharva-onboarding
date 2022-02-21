@@ -1,0 +1,32 @@
+#+TITLE: 2022-02-21
+
+* What did I do on friday and today
+- Joy of Clojure book club
+- Read about fixtures and component lifecycle management
+- Troubleshoot DO deployment issues
+- Create fixtures and test users
+- Introduce component lifecycle management in bugle-forms
+* What will I do tomorrow
+- Adjust the CI to deploy to DigitalOcean
+- Pick up login story
+* Blockers
+- We don't have access to the Nilenso team in DigitalOcean. We have written to support. For now I'll make the project in a new team, and transfer it later.
+* TIL (+ commentary)
+** Joy of Clojure book club (on Friday)
+We talked about Clojure philosophy, mainly covering:
+- Why is Clojure a Lisp
+- Clojure's separation of values from identity
+The latter brought a bit of confusion for me initially, because while I understood it conceptually, I wasn't too sure about how it manifested in Clojure. I said that the separation exists in Clojure due to all values being immutable (whether it is a scalar or a collection), and identity being supported through atomic references to values.
+
+Neena also asked me a question which at the time was a proper headscratcher:
+#+begin_quote
+If I modified an OO language such that everytime I modify a field in a class, it returns a new class with the changed field (and the other members are structurally shared). Have I separated identity and values?
+#+end_quote
+
+The answer is no. The problem with this is the object's identity will still be the instance of the object (almost by definition). What about the value? That is also the same object instance! Identity and value is one. It won't matter if we imitated persistence and immutability in objects.
+
+Had we modelled the same thing in Clojure, we would store the object fields as a map or record, which is a /value/ and not the /identity/ of the thing we are modelling. If we wanted to model an identity that evolves over time, we'd put that in one of Clojure's Ref-like containers.
+
+** Misc
+- I also learnt how to setup fixtures in tests.
+- Learnt about =mount=, which at first seemed to have a lot of README dump that was daunting, but turned out to be rather simple to grasp and use. I should check out the mount presentation by Yogi sometime later for a deeper understanding.
