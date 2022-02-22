@@ -1,0 +1,22 @@
+#+TITLE: 2022-02-22
+
+* What did I do today
+- Create and configure DO staging and production droplets
+- Strategize how to deploy to the new thing in CI
+* What will I do tomorrow
+- Adjust the CI to deploy to DigitalOcean
+- Pick up login story
+* Blockers
+nah
+* TIL (+ commentary)
+** Catch-up with Prabhanshu: Deploying to a Linux box
+Now that we have the flexibility of our own Linux box, there are many options to deploy an app to a Linux box. I had a very vague understanding before this.
+
+The options we enumerated are:
+- One time setup of services + scp/git clone the JAR to the server, and set that to autostart using scripts and systemd or its alternatives
+- Proxy the application behind Apache/Nginx
+- Use docker-compose to spin up the application services
+
+We are currently favouring the third option, as we already have a docker-compose file that was setup for testing and development, and it can naturally extend to production as well. We also get access to auto-restarts.
+
+The other two options would involve a lot more configuration that isn't as declarative.
