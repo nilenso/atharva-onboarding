@@ -1,0 +1,23 @@
+#+TITLE: 2022-02-24
+
+* What did I do today
+- Deploy to the new staging server
+* What will I do tomorrow
+- Fix the automated deployment on CI
+- Pair?
+* Blockers
+nah
+* TIL (+ commentary)
+** Neat things that Docker allows me to do
+I learnt a neat way to deploy an application with Docker Compose (for my purposes, ie, a simple web app).
+
+If you set the DOCKER_HOST environment variable to an ssh url, it issues commands to the docker daemon on the remote host, and the remote host will pull all the necessary images and run the command. Because I can add a =restart=always= key to my compose spec, I get some minimum level of failure recovery for free.
+
+So this is how I am deploying my app. I don't need to transfer my source code to the server at all :)
+
+** Stories
+Donut meetups at nilenso have always been great, and I end up learning stuff from people, even if we are just chilling. Today Udit gave me a small idea about Elixir's philosophy and how it handles concurrency. He shared a talk about it as well, which I might check out this weekend. He also told me a story about a prod failure from Insider.
+
+While yesterday's chat with Srihari and Shivam wasn't a donut meeting, I still got to hear stories about database perf issues from Gojek, and how Stuart Halloway fixed the bug for them by adding one character.
+
+What I'm trying to get at here is: please dump your stories @ me. I enjoy them a lot. thx
