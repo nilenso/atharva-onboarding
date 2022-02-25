@@ -1,0 +1,20 @@
+#+TITLE: 2022-02-25
+
+* What did I do today
+- Setup new CI and make PR for it
+- Joy of clojure
+* What will I do on monday
+- Pick up the login story
+* Blockers
+nah
+* TIL (+ commentary)
+** Joy of Clojure book club
+In today's episode of overloaded words:
+- collection: sets, vecs, lists, maps (but not string)
+- seq: API that requires implementation of ~first~ and ~rest~
+  - works on all collections and strings
+  - BUT
+  - ~seq?~ returns true only on ~lists~. ¿?
+    - this is because a ~first~ and other seq functions first convert the collection to a seq and then do the ~first~ operation on it.
+- sequential: vecs and lists, but nothing else (ie, data that has an ordering)
+- sequence: a sequential collection that may or may not be realized yet
