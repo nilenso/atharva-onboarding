@@ -1,0 +1,16 @@
+#+TITLE: 2022-02-28
+
+* What did I do today
+- Finish and merge the signup story
+- Start login story
+* What will I do tomorrow
+- Get sessions working for login
+* Blockers
+nah
+* TIL (+ commentary)
+** Catch-up with Kiran
+Kiran verbally listed off several ways secrets are managed in projects he has seen. Some that I learnt about:
+- Using an external application like Vault (by Hashicorp) or (more rudimentary) mozilla/sops.
+- Barebones: dump the secrets in the server filesystem, either as a secret config file or =.env= file that is loaded into the environment on deployment.
+- Use a SaaS with shiny UI to add secrets and call that to get the required config.
+Bugle forms takes the second approach, because simplicity.
