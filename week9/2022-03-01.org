@@ -1,0 +1,23 @@
+#+TITLE: 2022-03-01
+
+* What did I do today
+- Continue work on login story
+* What will I do tomorrow
+- Continue work on login story
+- Pair with Sezal?
+* Blockers
+nah
+* TIL (+ commentary)
+** A note about generating random numbers in Clojure
+There isn't a great Clojure library that provides a proper CSPRNG function, which was surprising. The only okay one I found was [[https://funcool.github.io/buddy-core/latest/00-introduction.html][buddy/buddy-core]] which says on the documentation's front page that the API might break...
+
+The nice thing is that I can just use Java's interop. Since I only need a CSPRNG this lets me have it without needing any extra dependencies:
+#+begin_src clojure
+(defn generate-session-id
+  []
+  (let [random (SecureRandom.)
+        base64 (.withoutPadding (Base64/getUrlEncoder))
+        buffer (byte-array 32)]
+    (.nextBytes random buffer)
+    (.encodeToString base64 buffer)))
+#+end_src
