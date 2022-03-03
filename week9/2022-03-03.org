@@ -1,0 +1,19 @@
+#+TITLE: 2022-03-03
+
+* What did I do today
+- Write a script to summarize TILs
+- Write an ADR for form representation
+* What will I do tomorrow
+- Address review for login story
+- Start the form builder work if the ADR gets a positive response
+* Blockers
+nah
+* TIL (+ commentary)
+** PostgreSQL and JSON
+I learnt that PostgreSQL has support for JSON columns, which is kinda cool. It lets you get some of the nice things that you get in flexible-schema NoSQL stores, while still keeping the relational stuff. This was what I felt suited Bugle Forms particularly well, because I wanted a [[https://github.com/nilenso/bugle-forms/blob/adr/002/doc/arch/adr-002-form-representation.md][some flexibility]] for form representation while still having the transactional SQL querying that I get from an RDBMS.
+
+You even have special operators that extend the SQL syntax for manipulating JSON data, and one of the JSON types can be indexed.
+
+PostgreSQL has two types of JSON columns: =json= and =jsonb=. The extremely-lazy-summary:
+- =json= is for the most part equivalent to a =text= type with JSON validation.
+- =jsonb= stores your JSON in an internal Postgres binary format. This makes reads faster and the fields easily indexable. Often what you want in most cases.
