@@ -1,0 +1,859 @@
+* Log for:  2021-01-04
+
+** Notes: The Pragmatic Programmer
+ - Broken windows ruin cities—don't let neglect persist. It is not too different from how people spit paan under marathahalli bridge because it's already pretty dirty there.
+ - Like the soldiers making stone soup, incrementally introducing ideas can drive change.
+ - That said, avoid the converse—gradual rot going unnoticed (boiled frogs)
+ - Be a smart communicator, notice how you sound. It's also about timing your communication right, and tailoring it to the audience.
+ - Treat your knowledge portfolio like a financial portfolio—diversify, invest what should increase in value, and keep learning and ensuring it is up to date.
+ - The essence of good design—ETC, ie, Easy To Change. Most rules are just a subset of ETC.
+
+** Notes: Clojure from the ground up
+ - Symbols resolve to Vars, which ultimately refer to a value. Why this distinction??? The other lisps and (and definitely Scheme) do no such thing.
+ - Is it because Symbols cannot be mutated, while Vars can? Even then, why is this distinction useful?
+
+** Misc
+- Attended my first stand-up meeting.
+
+** General thoughts
+- 4clojure's replacement website is a bit clunky. I need to refresh every time I go to a new problem for making the correct test cases pass. Mildly grating.
+- It's only the first day, but manipulating collections and doing low-level (albeit useful) operations might get boring fast. Maybe I should throw myself into harder problems and try to drown to know where I stand.
+* Log for:  2021-01-05
+#+OPTIONS: toc:nil
+
+** What I learned today
+*** The Pragmatic Programmer
+- DRY is more than just avoiding repeated code lines. It's a general principle that ensures that the system remains consistent and easy to change.
+- Orthogonality is also important for easy to change code. Complexity is managed by making sure changes to one part of a system does not affect other parts.
+- The book's depiction of DRY and orthogonality is easier said than done imo (the authors say so themselves). In my time with the Git project, I worked on code written by people 100x smarter and more competent than me, and yet it was as orthogonal as a Jenga tower slathered with eel slime.
+*** Misc
+- Had a great conversation with Srihari. He clarified wth complect means, and how it relates with Orthogonality.
+
+  He also had a look at my highly complected imperative solution. Made me realize there is still a long way to go for me to think more functionally.
+
+  Finding the longest subsequence, ie: [1 0 1 2 3 0 4 5] -> [0 1 2 3]
+
+  My solution:
+
+  #+BEGIN_SRC clojure
+(defn ss [coll]
+  (loop [longest [(first coll)]
+         curr [(first coll)]
+         coll coll]
+    (cond
+      (= (count coll) 1) (if (> (count longest) 1) longest [])
+      :else (let [new-curr (if (< (first coll) (second coll))
+                             (conj curr (second coll))
+                             [(second coll)])
+                  new-longest (if (> (count new-curr) (count longest))
+                                new-curr longest)]
+              (recur new-longest new-curr (rest coll))))))
+  #+END_SRC
+
+  The problem with this solution is that it's too imperative, and I'm effectively doing the equivalent of iterating and mutating. Contrast with the more declarative solution (annotated because it's hard for me to make sense of with a glance)
+
+  #+BEGIN_SRC clojure
+(fn [c]
+  (->> (partition 2 1 c)                     ; partition into pairs, with one overlap
+
+    (partition-by #(- (second %) (first %))) ; partition further based on
+                                             ; difference between pairs
+
+    (filter #(= 1 (- (second (first %)) (ffirst %))))  ; only keep pair groups where
+                                                       ; the numbers are consecutive ; (and increasing)
+
+    (reduce #(if (< (count %1) (count %2)) %2 %1) []) ; get the biggest such
+                                                      ; pair group
+    ; flatten and make distinct to get back largest consecutive subsequence
+    (flatten)
+    (distinct)))
+  #+END_SRC
+
+  Where I am currently lacking is thinking in such a declarative way. I even find the latter version a little harder and slower to dissect in my head. And then there's solutions like these which whizz over my head completely:
+
+  #+begin_src clojure
+#(apply max-key %
+  (reverse (for [x (%2 (% %3)) % (%2 x (- (% %3) 1)) ; keeping track of positional
+                                                     ; args hurts my head...
+                                                     ; ...clojure has for???
+  	   :let [% (subvec %3 x (+ % 2))]]
+	     (if (apply < %) % []))))
+count range ; why are these floating here without the cuddly parens??
+  #+end_src
+
+  I hope I can come back to this two weeks from now and feel more comfortable reading all that.
+
+  (nuance: quite possible 4clojure solution writers tend to be golf-y, and this can be improved on)
+
+** Questions
+- Clojure: are =def='s inside functions discouraged? Is =let= the preferred way to bind expressions within a function or 'scoped block'?
+  (Context: in Racket it's accepted to have local defines scattered in a block because they stay local in scope.)
+* Log for:  2021-01-06
+#+OPTIONS: toc:nil
+
+** What I learned today
+*** Clojure from the ground up
+- Lots of new information. Learnt about some concurrency primitives.
+- Delay: Lazy eval, but unlike a thunk, execution happens only once on a deref, and it looks up the value on subsequent derefs.
+- Future: Send a computation off in a new thread of execution. Deref asks for the value back, blocks if still not done.
+- Promise: A holder of a future computation that is not known yet. Deref blocks until someone has delivered the promise. BTW: This is very different from JS Promises.
+- Atoms are opaque holders of state. They are linearizable, ie, multiple writers can write concurrently to the atom, but it will ensure the appearance of some sequence of writes. Every read after a write ensures the newest state for all readers.
+- Refs are opaque holders of state. They ensure serializability(???). Along with dosync you can do transaction-style updates to a group of refs.
+- Wrote my first clojure macro, which was basically simulating futures using promises.
+- Vars def'd with =^:dynamic= are exactly the same as Racket's =parameter='s (vars with [[https://prl.ccs.neu.edu/blog/2019/09/05/lexical-and-dynamic-scope/][indefinite scope, dynamic extent]]). Neena's mention of dynamic vars (and their thread-local scope) in yesterday's discussion clicked harder today.
+** Questions and Comments
+*** Clojure
+- Aphyr's guide on state and concurrency is a good start, but I still don't have the big picture of how futures, promises and all the transact-y stuff comes together. For example: how do people do async network stuff?
+- I also did not quite grasp Q4 and Q5 in the exercises of [[https://aphyr.com/posts/306-clojure-from-the-ground-up-state][aphyr's guide]].
+- Aphyr mentions in his tutorial:
+  "Atoms are a great way to represent state, but they are only linearizable individually. Updates to an atom aren’t well-ordered with respect to other atoms, so if we try to update more than one atom at once, we could see the same kinds of bugs that we did with vars."
+  I need to see an example of how things blow up when trying to update several atoms. I also do not understand the distinction between serializability and linearizability. Maybe that would make sense after trying to see where atoms fall short compared to refs??
+- I did a =(source frequencies)= to get:
+  #+begin_src clojure
+(defn frequencies
+  "Returns a map from distinct items in coll to the number of times
+  they appear."
+  {:added "1.2"
+   :static true}
+  [coll]
+  (persistent!
+   (reduce (fn [counts x]
+             (assoc! counts x (inc (get counts x 0))))
+           (transient {}) coll)))
+  #+end_src
+
+  wow much impurity such mutations. what are transients?? should figure that out sometime later, although idk how important this is.
+
+  On 4clojure, I came up with a nice functional solution for implementing =frequencies=, and it made me very happy.
+  #+begin_src clojure
+(defn freqs [coll]
+  (apply (partial merge-with +)
+         (map #(hash-map %1 1) coll)))
+  #+end_src
+
+  Definitely better than my loop-recur monoliths I was previously writing?
+
+  One more bizarre error for [[https://4clojure.oxal.org/#/problem/56][problem 56]]. My solution works on my clojure REPL and an online cljs REPL. It ONLY does not work on the 4clojure website for two cases.
+
+  #+begin_src clojure
+(defn ord-dist [coll]
+  "Create sequence of distinct items, while maintaining order"
+  (into []
+        (apply sorted-set-by
+               #(< (.indexOf coll %1) (.indexOf coll %2)) coll)))
+
+;; (= (ord-dist [:a :a :b :b :c :c]) [:a :b :c]) ; on my REPL/online cljs REPL
+;; (= (ord-dist [:a :a :b :b :c :c]) [:a])       ; on 4clojure
+  #+end_src
+
+  Something wrong with the implementation of 4clojure??
+* Log for:  2021-01-07
+#+OPTIONS: toc:nil
+
+** What I learned today (+ some comments on it)
+*** Clojure from the brave and true
+- Namespaces provide isolation between object names. Dots separated names mirror the path of a file (are there exceptions?).
+- =require=: Evaluates a namespace symbol, and lets you use all public objects in it. The objects needs to be fully qualified, unless aliased with =:as=/=alias=, in which case, you qualify with the chosen alias.
+- =refer=: Lets you use symbols from another namespace without qualification.
+- =use=: Same as requiring, and then referring =:all=, Clojure community seems to frown on its usage in production code.
+- Just use =ns= macro btw, that combines all of the above and does other handy things like referring =clojure.core=.
+*** Clojure from the ground up
+- Absolute basic unit testing from =clojure.test=.
+- I read about modeling a problem in Clojure, and read through aphyr's rocket ship example. My main observations:
+  - For modeling problems, favour many pure functions operating on few immutable data structures. Aphyr used a hashmap to represent the data.
+  - I am aware of some of the tradeoffs between Records and the persistent maps, but not too sure what is used when.
+- Polymorphism. Wew, so much new info here. It's a lot to take in, and I'll probably have to see how all these features are used in real code, whenever that happens.
+  - Clojure has multiple dispatch with multimethods. It uses =isa?= to determine how to select a function. We can setup our own relationship between symbols/keywords using =derive=. Neat!
+  - Clojure also has interfaces which feel highly bizarre to me. Haven't seen this in any other language. So you create interfaces with =definterface=, define methods (which are more like Java methods than Clojure's first-class functions, and behave differently, and are called differently), and then create an instance using =reify= (which closes over args) where you specify the methods for the interfaces. You cannot extend existing interfaces with new methods though.
+  - Clojure has protocols which appear way more useful. It's like an interface again, but you can extend a type with a previously defined interface, or extend an interface with a new method. Both this and multimethods solve [[https://wiki.c2.com/?ExpressionProblem][the expression problem]]. So I wonder what multimethods can solve, that protocols cannot?
+- I have still not finished the post on Polymorphism, so maybe reading the rest will paint a better picture.
+*** The Pragmatic Programmer
+- Make your code, architecture, deployments and integrations reversible, because software is complex, and every component changes all the time, especially with all those fads. This mitigates the pain of change. Use good abstractions to make decisions reversible.
+- Use tracer bullet development, ie, make a minimum end-to-end solution that integrates all the parts. See if it works, and if it does, build around this thin tracer code. Note: this is different from prototypes, which are for exploration, and are meant to be disposed.
+* Log for:  2021-01-10
+
+** What I learned today (+ comments on the same)
+*** Clojure from the ground up
+- Polymorphism cheatsheet:
+  *Multimethods*: works with any arbitrary object, uses dispatch function to determine what to use (which is also a performance penalty).
+  *Protocols*: works only with named types (=deftype=, =defrecord=). Types can be extended to support more protocols, protocols can be extended to support more types.
+  *Interfaces (definterface)*: lets you define an interface that cannot be extended to more types later. Best performance.
+- =deftype= gives you a super bare-bones type, while =defrecord= gives you map-like behaviour.
+- Debugging: tbh, nothing new here, aphyr's tutorial was just a general methodology to trace the source of problems, read stack traces, print debugging etc. Was a nice refresher though.
+-
+** Commentary: reading =chronograph= source
+- I decided to look into a proper project source code sample, and I looked at =nilenso/chronograph=. I wrote comments of what I understood from it. The goal is to document the gaps in my understanding, not really to get answers to all these questions asap, since I am not too sure what is worth spending my time on atm.
+- Okay, so this is a time tracker, like harvest? The readme is very descriptive about the dev setup, but lol it forgot to say what it is.
+- The =defproject= definition is much bigger than anything I have encountered in the starter guides I've read so far.
+  What makes sense: specifying dependencies, source paths, test paths, plugins, profiles (kinda? idk its mechanics).
+  Went over my head:
+  - What's different between the jar and uberjar in this project? I see both names specified, not sure which comes into play on what command.
+  - =^:skip-aot=? =^:replace=? =:uberjar-exclusions=?
+- Config files: clojure projects seem to use edn, which look like clojure maps. There are some weird reader macros strewn in like =#merge= and =#include=, not sure what it does. This project stores database info in the config/* part.
+- =resources/migrations/*=: are these generated by some tool? they look generated, because timestamps on the filenames. I might be wrong.
+- =src/cljc= seems to be stuff common to both, the cljs frontend and clj backend.
+  - =spec.cljc= looks interesting. They look like Racket contracts, ie, runtime validation of data. Not sure how and when they are enforced yet.
+- =src/clj= is clojure backend stuff and =src/cljs= is clojurescript frontend stuff?
+  - the former seems to be using a framework(?) called =ring= which claims to be like Rack/WSGI for clojure, which is an unhelpful analogy as I am unfamiliar with either. But I can see some handlers and responses being returned.
+  - =defstate=? probably from some library?
+  - the latter uses reframe, and a glance at the doc page gives off esoteric functional jibberjabber vibe. Skip for now.
+- what is =:gen-class=?
+- could not really wrap my head around the application logic and what's going on otherwise. I don't really know what the project does either, so cannot really know what to look for.
+** Misc
+- Watched "simple made easy" in the weekend. Great talk and philosophy, although given the need for brevity, some things did not fully click with me, specifically when he contrasted simple and complex constructs and why some are more complected than others. I need to look for examples for me to be fully clear about it.
+* Log for:  2022-01-11
+
+** What I learned today (+ comments on the same)
+- For the first time, nothing significantly new. A little bit about performance of transducers, but not in any useful detail.
+** Misc
+- Would love to get feedback on the solutions I added today, ie:
+  #+begin_src clojure
+;; https://4clojure.oxal.org/#/problem/60
+(defn reductionz [func acc coll]
+  (let [n (count coll)]
+    (->> coll
+         (repeat (inc n))
+         (map #(take %1 %2)
+              (range (inc n)))
+         (map #(reduce func acc %)))))
+
+;; https://4clojure.oxal.org/#/problem/69
+;; wew, this one took a while
+;; is this easy to understand?
+(defn murge-with [func & maps]
+  (apply merge
+         (for [k (distinct (mapcat keys maps))]
+           {k (reduce func (filter identity (map k maps)))})))
+
+;; https://4clojure.oxal.org/#/problem/70
+(defn splort [line]
+  (sort-by clojure.string/lower-case
+           (clojure.string/split line #"\W")))
+
+;; https://4clojure.oxal.org/#/problem/73
+;; Tic Tac Toe Verifier.
+;; Probably bad style to have internal functions
+;; strewn in like this? I stuffed these in because
+;; 4clojure likes everything in one function.
+(defn get-winner [board]
+  (letfn [(all-three [vec]
+            (condp = (distinct vec)
+              [:x] :x
+              [:o] :o
+              nil))
+          (rows [b] b)
+          (columns [b]
+            (for [pos [first second last]]
+              (map pos board)))
+          (diagonals [b]
+            [[(-> b first first) (-> b second second) (-> b last last)]
+             [(-> b first last)  (-> b second second) (-> b last first)]])
+          (solution-along [axis]
+            (some->> (axis board)
+                     (map all-three)
+                     (reduce #(or %1 %2))))]
+    (some solution-along [rows columns diagonals])))
+  #+end_src
+
+  All solutions till now can be found [[../4clojure.clj][here]].
+* Log for:  2022-01-12
+
+** What I learned today (+ comments on the same)
+- Nothing new. Sharpened up what I already know.
+** Misc
+- Solved more problems. I left comments above the solutions in the file, generally how I felt while solving a problem.
+  Solutions can be found [[../4clojure.clj][here]].
+* Log for:  2022-01-13
+
+** What I learned today (+ comments on the same)
+- Sharpened up what I already know.
+- Saw how to use a debugger in Emacs.
+** Misc
+- Updated solutions can be found [[../4clojure.clj][here]].
+* Log for:  2022-01-14
+
+** What I learned today (+ comments on the same)
+*** The Pragmatic Programmer
+- *Prototypes, in a nutshell*
+  - Need not be code
+  - Can ignore completeness, correctness, robustness or style
+  - Use them to figure out high-risk or unproven components
+  - Don't actually deploy the prototype, see instead: tracer bullet development
+- Questions that should be answered when using prototypes
+  - Are responsibilities, and collaboration of components well defined?
+  - Is coupling minimised?
+  - Is there duplication?
+  - Are interfaces and constraints acceptable?
+  - Does every module have access to the relevant data, when it needs it during execution?
+- Domain Specific Languages
+  - Helps program close to the problem domain
+  - Types: internal, external (from scratch), external (reusing a format, like YAML)
+- *Estimating models*
+  - Convey in the units that match your precision, give ranges based on contingencies
+  - Bother mostly with the major effects, ie, multiplicatives over additives
+  - Best estimates often come from those who have done a similar thing before
+  - Break model into components, which will have parameters, give values to these parameters
+  - Keep track of how well you did
+- *Estimating schedules*
+  - Develop iteratively and make the estimate more accurate with each iteration.
+  - The best answer: "I'll get back to you"
+- *Debugging 101*
+  - Don't Panic, Don't Blame
+  - Make the bug reproducible, ideally with a single command
+  - Read the damn error message
+  - Bisect stacktraces and releases
+  - Log and trace
+  - Rubber ducking
+  - =select= isn't broken
+  - Don't assume a component works, prove it
+* Log for:  2022-01-17
+
+** What I learned today (+ comments on the same)
+*** Catch-up with Kiran + Prabhanshu
+- Some essentials of project management, ie, why is it needed, the relationships between tasks and stories.
+* Log for:  2022-01-18
+
+** What I learned today (+ comments on the same)
+- The basics of setting up CI (and CD, kinda) on GitHub Actions
+- Clojure I/O (enough to parse and process CSV files)
+* Log for:  2022-01-19
+
+** What I learned today (+ comments on the same)
+*** Pairing session with Govind
+- Tradeoffs between handwritten unit tests and property-based generative tests
+  - Handwritten unit tests: easy to write, better conveys intent of program, but you can't account for most cases
+  - Generative tests: less easy to reason about properties, generator has to be designed generate data in ways that are useful to the program, can't be totally random
+- A nice way of organizing code is to have the messy side effects at the boundaries, while keeping the core purely functional.
+  - Generalization: onion architecture
+*** Catch-up with Kiran + Prabhanshu
+- Discussions on testing style and readability (and the TDD word)
+- Arrange, act, assert
+* Log for:  2022-01-20
+
+** What I learned today (+ comments on the same)
+- Hardly anything new, just some practice of writing Clojure.
+- If it counts, I learnt how to use the CLI parsing library from clojure.tools
+* Log for:  2022-01-21
+
+** What I learned today (+ comments on the same)
+- Clojure's spec API and how it can be used for generative testing.
+* Log for:  2022-01-24
+
+** What I learned today
+- [[12factor.net]]
+- Ring: Handlers, middlewares, web programming basics.
+* Log for:  2022-01-25
+
+** What I learned today (+ commentary on the same)
+- Learnt this technically a few days ago, but I never wrote it down, so
+  A lazy man's one-liner guide to the 12 factors (for making SaaS apps):
+  1. Codebase: Sanity is to maintain one version of your codebase, and have many deploys (eg: dev, qa, prod).
+  2. Dependencies: Declarative dependencies only, explicitly name everything, and have them be used in isolation.
+  3. Config: Environment variables master race.
+  4. Backing Services: Every backing service should be attached resource with a handle (usually, urls).
+  5. Build, release, run: Keep them strictly separated.
+  6. Processes: Apps should be one or more stateless, shared-nothing processes.
+  7. Port binding: Export services via port binding (*Q*: Is there even any other way to export a service?¿?¿).
+  8. Concurrency: Scale out (ie, horizontally) using the process model.
+  9. Disposability: Start fast, die gracefully.
+  10. Dev/prod parity: Should be as small as possible—use the same stuff in dev and prod, pls.
+  11. Logs: Should be event streams, ie, dump to stdout and let some other service handle it.
+  12. Admin processes: Should be one-off, part of the code and run in an identical environment as the processes.
+- Discovered ~Hiccup~: Looks like a Clojure's equivalent to Racket's [[https://docs.racket-lang.org/xml/index.html][xml]] library, ie, HTML is Lisp, let's represent it that way.
+- HoneySQL: Looks like Clojure's equivalent to Racket's [[https://docs.racket-lang.org/deta/index.html][deta]] library. I know Rich Hickey hates ORMs, would this fall into that category?
+- Middlewares: I like the idea of threading functionality together like this. This chaining structure reminds me of the M-word.
+- Mini rant: I dislike the opening line of ~Ring~'s README. \\
+  "Ring is a Clojure web applications library inspired by Python's WSGI and Ruby's Rack."
+
+  Assumes I am familiar with either of those. Imagine if we described everything like this.
+
+  "Go is a language inspired by ALGOL." \\
+  "async-await is a feature that is inspired by the do notation for m*nadic chaining of Scheme-like continuation-passing style."
+
+  I get that it helps to compare an existing popular thing to let experienced devs quickly know what something is, but maybe do that after describing what your thing is, and what it is used for before going there. \\
+  /endrant
+- [[https://stuartsierra.com/2016/01/09/how-to-name-clojure-functions][Naming things in Clojure]]: haha, I broke half the guidelines here on record linkage. No wonder Srihari shared this with me. This guide was loose with the rules, because naming things is hard (I remember going through ~4-5 iterations of reviews in the Git mailing list to essentially figure out how to name my functions). Also this guide was good, but also slightly irritating to my Racket sensibilities, where the conventions are different in many ways. I'll get used to it.
+* Log for:  2022-01-27
+
+** What I learned today (+ commentary on the same)
+*** Pairing with Sezal
+- Naming things is hard, and what contributed to my code being hard to read.
+- I particularly liked the suggestion for making my reduction look readable. My original reduce call had this form:
+  #+begin_src clojure
+  ;; do-some-voodoo is accumulating stuff in the initial map we pass to it
+  (reduce (partial do-some-voodoo arg) {} thing-to-reduce)
+  #+end_src
+  Which got refactored to something like:
+  #+begin_src clojure
+  (reduce (fn [accumulated-thing record]
+            (merge accumulated-thing (some-voodoo arg))) {} thing-to-reduce)
+  #+end_src
+  That way it's easy to see what and how something is getting reduced, while still not having a bulky function.
+- She also showed me another way to approach the problem with linear time complexity which was neat.
+*** Commentary: A general pattern that has emerged from pairing
+Over the last two weeks I have started pairing with people, and I feel a pattern emerging.
+
+For example today, when I paired with Sezal, she asked me through go through the code. As I start going through the functions, I start thinking (or saying out loud), "oh yeah, this function is pretty hard to read. Oh, this name makes no sense.", and I basically start reviewing myself. It all probably looks silly. If I knew this, why didn't I fix it before the review?
+
+The issue seems to be that I don't rewrite code. I write it once, get it to work, and while I am writing it, it makes sense to me. So I leave it at that. But when I look at it the next day, all the horrors of unreadability are suddenly clear to me. If I rewrite code before the reviews, it would save a lot more time for everyone.
+
+I think even making another pass at the code immediately after I am done writing it will catch a lot of the readability issues that emerge. I kept a rubber duck on my gather desk, but I don't use it enough. Maybe I should have a duck on my actual desk so that I remember to use it after every piece of functionality I write.
+
+Question for people who have paired with me: Would you agree with my self-assessment? Anything else you would like to add to it?
+* Log for:  2022-01-28
+
+** TIL (+commentary)
+- Saw John Hughes talk on property-based testing that Srihari had recommended to me. It gave me a better picture of how it's actually used in practice which was nice.
+- Clojure's spec guide also has a portion which confused me. I don't fully understand the relationship between clojure's properties and generator libraries, the spec library and =test.check=. There is definitely some overlap. I wish there was some guide that lays it all out and talks about the tradeoffs and differences, similar to [[https://github.com/plumatic/eng-practices/blob/master/clojure/20130926-data-representation.md][this one about data types and polymorphism]].
+** Catch-up with Kiran + Prabhanshu
+- We narrowed down to two ideas, the braindump outline can be found [[https://docs.google.com/document/d/1yrItd7PuqgAIGSMIG_7eNz5EndYzP6ZTp53_j9rIMxY/view#heading=h.l1pmmmytwq8e][here]]. Let me know your thoughts on the two projects :)
+* Log for:  2022-01-31
+
+** TIL (+commentary)
+- Caved in and tried to do property-based testing on record-linkage. Now I see why this is great. I discovered an edge case bug(??) in my implementation. It's not exactly a "bug" in the sense that my algorithm is broken, rather it brought up a design consideration that I hadn't factored in before.
+  Assuming the records:
+  #+begin_src clojure
+  [{:a 0, :b "", :c "\b"}
+   {:a 0, :b "dhl", :c ""}
+   {:a 0, :b "", :c ""}
+   {:a 0, :b "", :c ""}]
+  #+end_src
+  I want to match records having the same =:b= field OR =:c= field.
+
+  What ID should that last record get? Should it get the ID that the first record is assigned (because =:b= field matches), or should it get the ID the second record is assigned (because =:c= field matches)? My implementation gave it the ID of the former, but this was not a deliberate decision, it just happened to be incidental.
+
+  Everywhere I read, testing gets praised a lot for making you think more carefully about your problem. Property-based testing has been just that, but on steroids. Thx John Hughes.
+
+  Update: Sandy pointed out that all of these records should have the same ID, through a transitive match. If you look at the domain this problem is for (ie, matching patients) we assume that our even if an OR match is indirect, it's the same patient at the end of the day.
+** Catch-up with Kiran + Prabhanshu
+- We are leaning towards the data collection API idea (outline [[https://docs.google.com/document/d/1yrItd7PuqgAIGSMIG_7eNz5EndYzP6ZTp53_j9rIMxY/view#heading=h.l1pmmmytwq8e][here]]), but we realised the problem can really blow up in scope once we started thinking about it more deeply. Depending on how you look at it, it could be a no-code platform/airtable to a basic Google form clone. Because of this we did not finalize it yet, but we'll weigh the alternatives tomorrow and make a final decision.
+* Log for:  2022-02-01
+
+** TIL (+commentary)
+*** Trying to understand Web Apps
+I have a very swiss cheese understanding of Web application programming in general. I always got knowledge about it in fragmented pieces, and because of that I never felt confident in my understanding of how modern web applications even work.
+
+My previous encounters with web application programming was in frameworks like Flask, or seeing other people use ExpressJS. While I saw how people put things together, these frameworks seem "too magical" in that I have no clue how writing a bunch of functions and routes translate to a webpage on the localhost instance. How does that relationship work in deployment? What is actually happening in all those layers.
+
+I shall now attempt to write down what I already know here as an exercise to expose where I have knowledge gaps, and figure out why I don't feel confident. Pardon me if this is verbose.
+
+**** Web Apps in a nutshell??
+- There are clients and servers. Client has an application that requests stuff, and server has an application that reads a request and gives the response to the client. For web applications, HTTP is the protocol at the application layer.
+- Client app: (Some kind of) browser
+- Server app: A web server software
+  - It listens for TCP connections (via sockets?) and receives the HTTP request payload. Does a lot of fancy stuff to make it performant. Many of them(?) can serve static content straight away.
+  - Eg: Apache httpd, Jetty(?), Tomcat(?), Aleph(?), http-kit(?), nginx(???)
+    - Jetty and Tomcat seem to be servers that run Java Servlets, ie, it's like an Apache but with Java stuff as the only gateway?
+  - To make it serve dynamic content (ie, web apps that we write) it needs to support some "gateway interface".
+    - CGI (old skool), language-specific like WSGI, Rack and Ring(??)
+      - Ring: the thing that bridges the web server application to the web application handler functions that we write.
+        - We need a way to match the path in the HTTP requests to map to a handler function that does fancy dynamic things. This is what routing libraries are for?
+    - Our web app essentially manages business logic and state (by connecting to some DB) and returns an appropriate response to an action. (Eg: JSON for REST calls or HTML for interactive web apps)
+- What do local development servers do (eg, when running Flask locally)? Are they pretending to be Apache, but without the gateway ceremony?
+* Log for:  2022-02-03
+
+** TIL (+commentary) (includes yesterday's stuff)
+*** Commentary: Making stack choices
+Making stack choices, especially for a Clojure webdev project is hard. There's way too many options and I want to make informed choices with a clear rationale rather than go with what's popular. Unfortunately every time I try to look at my options, I am a bit overwhelmed. All roads lead to a rabbithole of documentation and opinions. I am not clear about the tradeoffs I want to make.
+
+Eg: There are 5 different routing libraries, at least 3 popular component lifecycle management libraries (do I need one?), many databases, many web servers (jetty or http-kit or aleph? what about Ring?), configuration management (environ or aero or what-have-you) etc.
+
+This is where the utility of opinionated guides are. Unfortunately, I could not really find any.
+
+Ideally I want to start as manual as possible and only really upgrade to a library once it gets borderline tedious. Maybe I will only start with a routing library and Ring.
+*** Docker
+I finally decided to have a proper sit-down and learn about Docker and how it is used in practice. I deployed my app as a Dockerized container.
+
+The Docker 101 tutorial (packaged with the docker install itself) seemed to imply that devs should always run the dockerized app during development. The setup they showed was to setup persistence using volumes along with a binding mount on the code (which in their example is used to propagate the code changes to the container using =nodemon=). And since doing this with a multicontainer setup is cumbersome, you should use docker-compose to automate spinning up these containers.
+
+...Do developers actually do this in practice? It seems like a lot of work. Maybe on a complex and large application this would make sense, but I generally dislike fiddling with setups and this seems to get in the way of a nice, tight feedback loop.
+
+Besides, how would this work in Clojure? I still want my REPL driven development, would that even be possible if my web app has been dockerized? It's all still fuzzy in my head.
+*** One month at nilenso
+it's been great
+* Log for:  2022-02-04
+
+** TIL (+commentary)
+*** What is a card?
+Today I was talking to Kiran about a dilemma I was having about project management. Basically: should this be a card? It wasn't a very simple question for me to answer, because there are some non-story tasks that I need to do, but don't really belong to a particular story. \
+Examples: setting up CI, refactoring, connecting to a database (since many stories would need this), etc. These tasks are non-trivial, atomic and yet do not contribute to a user story. Should these be in its own card?
+
+Since many organizations do this a bit differently, the basic heuristic we converged on is:
+- Even if a thing to do is independent of a story, we will assign it as a task to the first story that requires it.
+- It's okay not to do this for the first few tasks /before/ starting a project, eg: setting up CI.
+
+*** Joy of Clojure book club
+Talked about laziness. Got a few things clarified about its fundamental benefits.
+
+Why laziness?
+- We don't have to realize a computation in memory until we need it. Example:
+  #+begin_src clojure
+(->> patient-records                      ; 10000 records here
+     (filter #(> (:heart-rate %) 100))    ; in-memory -> nothing allocated
+     (map #(assoc :status "at risk" %))   ; in-memory -> nothing allocated
+     (take 8))                            ; in-memory -> eight items allocated
+  #+end_src
+  If this were eagerly computed we would have 10000 records created at each stage, which means 40000 records created. But because it's lazy, we only generate 8 records at the end.
+- Infinite sequences are possible like ~(range)~ or ~(iterate dec 0)~, which are a nice abstraction and makes programs easy to reason about.
+* Log for:  2022-02-07
+
+* Log for:  2022-02-08
+** TIL (+ commentary)
+*** Migrations
+The imbalances in programming guides on the internet rears its head again. I was surprised by how hard it was to learn about something as simple and basic as database migrations. All you get is bits and pieces, usually from library documentation that assumes I already know everything about migrations in some other framework.
+
+I'll find thousands of guides on these topics (rewritten on Medium by every Tomar, Deepti or Hari):
+- How to use =git reflog=
+- What is Kubernetes, and how to setup your own cluster
+- How to write your own Neural Network from scratch
+- Async and Await explained in JavaScript [[https://jvns.ca/blog/confusing-explanations/#pattern-3-strained-analogies][by making Pizza]]
+...etc
+
+On the other hand, I'll find nothing on certain topics, like migrations[fn:1]. Given that this is a fairly common thing, often more fundamental than any of the above examples, I was surprised I couldn't find much information. In fact almost all the sources I read failed to even tell /what/ is being migrated and /why/ is this needed. Just a how-to involving writing some SQL scripts for some contrived example.
+
+I somehow pieced together a more-or-less complete picture by frown-reading through Rails and Go's docs for migration libraries, along with asking Kiran questions about what is happening.
+
+[fn:1] Other topics that get scarce coverage relative to how common they are: CI/CD workflow patterns, why does =rebase= exist (and how to use it effectively without ripping your hair out), how to choose a tech stack pragmatically, how and when to use certain editor features for X language, etc.
+
+**** Migrations: extremely tiny summary that at least tells /what/ and /why/
+Database migrations are used for managing changes to the structure of your database (it does not manage the data itself). These frameworks keep the state of the database structure in sync with what the code expects.
+
+Without migrations, if I add a feature that requires a new table, all developers who collaborate with me will have to remember to manually add the table to their local database instance if they wanted to try out my feature. Cumbersome and unscalable.
+
+By using a migration framework, this won't be an issue. Along with my code changes, I also supply a script (often, SQL) which gives instructions for how to go from the current database structure to the one my new code expects. Most libraries also expect a complementary script that tells how to reverse that state (this enables rolling back migrations).
+
+Now other developers can run the migrate command which is essentially "applying" the alterations to the database. And now they can try out my new feature.
+* Log for:  2022-02-10
+
+** TIL + YIL (+ commentary)
+*** Pairing with Udit (yesterday)
+- I learnt about good practices when setting up a database, which I'd summarize as:
+  - Make your database setup easily reproducible by other developers—we did this using docker-compose and migrations (using migratus)
+  - Have clearly separated configuration profiles—we used aero to make this seamless
+- Learnt misc things about connecting to a database in the Clojure ecosystem, eg, jdbc and use of db specs.
+*** Catch-up with Prabhanshu
+- He gave me hints about how to approach user authentication—sessions is not the only way. \
+  My task will now be to figure what is the most suitable way to authenticate for our use case.
+* Log for:  2022-02-11
+
+** TIL + YIL (+ commentary)
+*** Joy of Clojure book club: laziness redux
+- I discussed the implementation of ~delay~ and ~force~. Laziness in Clojure is implemented by returning a function that will call the body to be ~delay~'d. ~force~ simply invokes this function. This same principle seems to be at play for ~lazy-seq~. Here's a more detailed description, taken from my Slack message at #winter-onboarding:
+  #+begin_quote
+  Re: Friday's book club discussion. I opened the guts of Clojure to see how laziness is implemented, and it turns out, it is indeed (almost) as simple as wrapping the body in a new function!
+
+  Eg: [[https://github.com/clojure/clojure/blob/326366d11923620f6815cfd149300bb48da01593/src/clj/clojure/core.clj#L748-L756][Delay]] is a macro that wraps the body of expressions in an fn (it uses fn* which calls the internal implementation of functions in Java).
+
+  On the other side, you can see the [[https://github.com/clojure/clojure/blob/d56812cf2e9f7a317f9b603ef4c9f07bf1bed281/src/jvm/clojure/lang/Delay.java#L26-L55][implementation of force]] as well, which literally calls the function that we wrapped earlier and returns that value. Similarly for lazy-seq, the thunk that is used to decide the next value to realize [[https://github.com/clojure/clojure/blob/b1b88dd25373a86e41310a525a21b497799dbbf2/src/jvm/clojure/lang/LazySeq.java#L39-L48][is also a function]]. So at least for Clojure, when laziness is achieved through wrapped function calls, ie, a more robust form of:
+
+  (defn my-delay [expr] (fn [] expr))
+  #+end_quote
+- Alisha demonstrated the lazy quicksort algorithm implemented in /The Joy of Clojure/. It's a beautiful and a sophisticated use of laziness.
+  #+begin_src clojure
+(defn sort-parts [work]
+  (lazy-seq
+   (loop [[part & parts] work]
+     (if-let [[pivot & xs] (seq part)]
+       (let [smaller? #(< % pivot)]
+         (recur (list*
+                 (filter smaller? xs)
+                 pivot
+                 (remove smaller? xs)
+                 parts)))
+       (when-let [[x & parts] parts]
+         (cons x (sort-parts parts)))))))
+  #+end_src
+  Here's how the program evolves when you run: =(take 4 (sort-parts (list [4 2 23 5 36 1 72 14 22 11 55 24 76])))=
+
+#+begin_src
+;; partitions around pivot 4
+=> ((2 1) 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; partitions around pivot 2 in the first sublist
+=> ((1) 2 () 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; nothing more to partition on the leftmost part → cons the first element with
+;; the result of sorting the rest
+=> (() 1 () 2 () 4 (23 5 36 72 14 22 11 55 24 76))
+
+;; three more iterations will realize '(1 2 4), the rest being:
+=> ((5 14 22 11) 23 (36 72 55 24 76))
+=> (() 5 (14 22 11) 23 (36 72 55 24 76))
+
+=> ;; realized: '(1 2 4 5)
+#+end_src
+
+  It takes a while to sink in, but the amazing thing is that it only sorts just enough to take the number of items we request. The authors have unified quicksort and [[https://en.wikipedia.org/wiki/Selection_algorithm][quickselect]].
+  - This is slightly different from quickselect in that we take the first n smallest numbers rather than the nth smallest number.
+*** Discussion: authentication and user identification methods
+I was a bit overwhelmed by the many ways to implement user identification and decided to write an [[https://github.com/nilenso/bugle-forms/blob/adr001/doc/arch/adr-001-sessions-for-auth.md][ADR]] to capture the decision I was leaning towards for Bugle Forms. Check that out to see what I learnt about auth, I won't be repeating it here (it's already getting lengthy here). Govind suggested that I check with the winter onboardees to get some opinions, as they had a structured discussion around this before.
+
+The general suggestions I got was this:
+- Client side sessions don't provide much benefit for my web app, especially because it is always accessed by a browser. The downside is dealing with logouts and the extra work with getting JWTs right, compared to Ring Sessions.
+- They did not like my proposal to store the sessions in memory, as it would wipe the sessions on every restart, which I agree is bad. What I intend to do is implement it in memory and get it to work first. After that I will move it to a persistent external store, by implementing the ~SessionStore~ protocol provided by Ring. Doing it this way means I'll never have to touch the application logic for handling sessions no matter where I store it.
+- I also asked why the winter onboardees used the cookie middleware for implementing the session store instead of using the ~SessionProtocol~. Shivam and Yogi had tried doing that in a time-box, but they could not get it to work due to some logical errors. Despite this potential obstacle, I really want to do it with the session middleware, because I feel like it is the most correct way to do this.
+*** Tramline Demo Session
+- Even though this was essentially a pitch for tramline, I felt like a learnt a lot about development workflows in a mobile team, especially from the [[https://docs.simple.org/engineering/android/deploying-to-play-store][Simple Doc]] about releases that was shared. I was surprised by how manual the whole thing is.
+* Log for:  2022-02-14
+
+** TIL (+ commentary)
+*** Pairing with Dan
+- Dan showed me the =spy= function from scope capture, which is this neat debugging tool that lets you capture all the locals accessible to an expression.
+  - The functionality is somewhat overlapping with the CIDER debugger, but the advantage here is that I can run my program in a complete flow without breakpoints, and then observe these captured scopes afterwards.
+- He also showed me how to observe Java classes and the methods exposed by them, which is a nice way of understanding what a library might be doing. "The code never lies": \
+  ~(.getMethods (class library-thing)~
+* Log for:  2022-02-15
+
+** TIL (+ commentary)
+*** Catch-up with Kiran
+- We discussed about error handling methods in Clojure. Kiran showed me the [[https://fsharpforfunandprofit.com/rop/][railway-oriented programming]] pattern which is a neat analogy that is basically a m*nadic pattern that I have seen elsewhere, but explained really nicely. Wish I had seen this earlier.
+  - As elegant as this is, he noted that there are tradeoffs to this, especially when used in Clojure, as people chain the error-producing functions with their own threading macro, and this can be confusing to people who are unfamiliar with the system.
+  - For now, because I don't want to reinvent the error monad or use libraries like =failjure=, I'll stick to wrapping an exception handler around my Ring handler.
+- I also noted that this pattern is a good example of abstraction that isn't merely indirection. Kiran recommended I check out Zach Tellman's talks about abstraction and also having a look at /Elements of Clojure/ (available in the nilenso library).
+*** Pratul's todoist session
+- Getting Things Done (GTD) philosophy in a nutshell: /If it takes less than 2 minutes, do it now. If it takes more than 2 minutes, write it down/. The main reason behind this is we don't avoid breaking our flow state.
+- Issue with most todo apps: too slow, not easily accessible.
+- Ideally we want a system that lets us dump tasks with natural language scheduling so that we can free our short-term memory and batch up the other stuff later. It's also nice to have staggering of schedules and flexibility because we are only human.
+- My biggest issue with todo apps in the past has been remembering to actually go back and look at my todos. Pratul deals with this by having a reminder to check the todo itself, which is something I should try next time, until the habit builds.
+- Also important: It's actually not about emptying the todo list and getting the tasks done on time. It's really just about keeping an account of the boilerplate tasks of life, which helps us stay on top of things.
+* Log for:  2022-02-16
+
+** TIL (+ commentary)
+*** Installing Ruby on mac
+Easily the worst installation experience I had in a long time. I wanted to see if I can help with the new website development (since I am blocked till review anyway). I needed ruby to build the website. Turns out the default ruby on mac is old and caused some file permission errors when trying to install bundle. Then I scoured the internet and got recommended =chruby= + =ruby-install= to install and manage rubies. Did that. Still broken. Why? Here's a story in commandline (abbreviated for flow):
+#+begin_src
+$ ruby-install
+<downloads a bunch of stuff to show me stable ruby versions>
+$ ruby-install 3.1.0   # latest stable
+
+$ cd nilenso.com
+$ make serve
+bundle exec middleman
+bundler: command not found: middleman
+Install missing gem executables with `bundle install`
+make: *** [serve] Error 127
+
+$ bundle install  # just doing what the prompt told me
+Calling `DidYouMean::SPELL_CHECKERS.merge!(error_name => spell_checker)' has been deprecated. Please call `DidYouMean.correct_error(error_name, spell_checker)' instead.
+Your Ruby version is 3.1.0, but your Gemfile specified 2.6.3
+
+$ ruby-install 2.6.3  # let's try to match the ruby in the Gemfile
+<long makefile compilation dump that ran for 5ish mins>
+<COMPILE ERROR. wot.>
+
+$ ruby-install 2.6.9  # let's try to use the nearest stable version with same minor version
+<this one compiled successfully>
+
+$ chruby ruby-2.6.9
+$ bundle install
+/Users/atharva/.rubies/ruby-2.6.9/lib/ruby/2.6.0/rubygems.rb:283:in `find_spec_for_exe': Could not find 'bundler' (2.1.4) required by your /Users/atharva/nilenso.com/Gemfile.lock. (Gem::GemNotFoundException)
+To update to the latest version installed on your system, run `bundle update --bundler`.
+To install the missing version, run `gem install bundler:2.1.4`
+	from /Users/atharva/.rubies/ruby-2.6.9/lib/ruby/2.6.0/rubygems.rb:302:in `activate_bin_path'
+	from /Users/atharva/.rubies/ruby-2.6.9/bin/bundle:23:in `<main>'
+
+$ bundle update --bundler  # uhh, lemme try updating?
+You must use Bundler 2 or greater with this lockfile.
+
+$ gem install bundler:2.1.4  # okay, install it is then, as the prompt says
+Fetching bundler-2.1.4.gem
+Successfully installed bundler-2.1.4
+Parsing documentation for bundler-2.1.4
+Installing ri documentation for bundler-2.1.4
+Done installing documentation for bundler after 1 seconds
+1 gem installed
+
+$ bundle install
+Your Ruby version is 2.6.9, but your Gemfile specified 2.6.3
+
+$ bundle update --bundler
+Your Ruby version is 2.6.9, but your Gemfile specified 2.6.3
+
+$ rm -rf --no-preserve-root /
+#+end_src
+
+UPDATE: wow ok, so I shouldn't have tried all this from the master branch, which is the legacy website. I switched over to =v2= and it's fine ...because it does not need ruby.
+* Log for:  2022-02-17
+
+** TIL (+ commentary)
+*** Code review with Srihari (+ neena cameo)
+**** The feedback I received
+At the highest level, Srihari's feedback was that while my first-principles approach is generally a good thing, it is manifesting in weird ways in my web application. For example, I have created a model layer, but I am not using it in a way that takes abstracts all the model-related responsibilities from the controller. Another example was when I included structural validation, but at the wrong layer (more on this to come). I should consider picking up a book and reading about patterns in web programming to complement what I am doing.
+
+**** Different ways of abstracting a web app
+
+It was a productive 2-hour session, and I don't think I can write down everything else here, but we talked about two different philosophies for abstracting web applications.
+
+#+begin_src
+                (...)
+                  ▲
+                  │
+       ┌──────────┼───────────────────────────────────────┐
+       │          │                                 B     │
+       │    ┌─────┴────────┐          ┌───────────────┐   │
+       │    │ ┌───┐  ┌───┐ │          │               │   │
+       │    │ │   │  │   │ │          │     ┌─┐       │   │
+       │    │ │   │  │   │ │          │     └─┘       │   │
+       │    │ └───┘  └───┘ │          │          ┌─┐  │   │
+       │    │              │          │  ┌─┐     └─┘  │   │
+       │    │     ┌──┐     │          │  │ │          │   │
+       │    │     └──┘     |          |  └─┘          │   │
+       │    │              │          │               │   │
+       │    └─────────▲────┘          └─────────▲─────┘   │
+       │    C         │                         │         │
+       │              │                         │         │
+       │             ┌┴──────────────┐          │         │
+       │             │               │          │         │
+       │             │   ┌──┐   ┌──┐ │          │         │
+       │             │   │  │   └──┘ ├──────────┘         │
+       │             │   └──┘        │                    │
+       │             │        ┌──┐   │                    │
+       │             │        └──┘   │                    │
+       │             │               │                    │
+       │             └───────────────┘                    │
+       │                        A                         │
+       └──────────────────────────────────────────────────┘
+#+end_src
+
+The idea is that you have these boxes (A, B and C) with different components in them, and a good boundary is when
+- A, B and C /occasionally/ calls between each other
+- Their inner components /often/ call each other
+
+This is a sign that we have cleanly separated out the responsibilities. So A, B and C can be something like a Controller, View and Controller, with domain objects inside them, or maybe they could be domain objects with their own little MVCs inside them. Pick the scheme that gives you cleaner boundaries.
+
+Another important principle I learned was about defensive layering in a web application. Srihari showed a really neat diagram which is rather self-explanatory:
+
+#+begin_src
+
+            middleware1
+           ┌────────────────────────────────────────────────────────────┐
+           │       middleware2                                          │
+           │     ┌──────────────────────────────────────────────────┐   │
+           │     │                                                  │   │
+      structural │                                                  │   │
+      validation │          middleware3                             │   │
+           │     │         ┌─────────────────────────────────────┐  │   │
+           │     │         │                                     │  │   │
+           │  semantic     │                                     │  │   │
+           │  validation   │                                     │  │   │
+           │     │         │                 ┌────────────────┐  │  │   │
+           │     │       domain              │                │  │  │   │
+           │     │       validation          │     The        │  │  │   │        ┌────────────┐
+ Incoming  │     │         │                 │     actual     │  │  │   │        │            │
+ Request   │     │         │                 │     business   │  │  │   │        │            │
+ ──────────┼─────┼─────────┼────────────────►│     logic      └──┼──┼───┼────────►  Database  │
+           │     │         │                 │                ◄──┼──┼───┼────────┐            │
+           │     │         │                 │i don't care    │  │  │   │        │            │
+           │     │         │                 │about data pains│  │  │   │        └────────────┘
+           │     │         │                 └────────────────┘  │  │   │
+           │     │         │                                     │  │   │
+           │     │         │                                     │  │   │
+           │     │         └─────────────────────────────────────┘  │   │
+           │     │                                                  │   │
+           │     └──────────────────────────────────────────────────┘   │
+           │                                                            │
+           └────────────────────────────────────────────────────────────┘
+         (we can also substitute "validation" with "coercion")
+
+(I used asciiflow to make these diagrams)
+#+end_src
+**** Misc
+We also talked about other stuff, like mocking a database (Srihari is generally not a fan of this, and with a few exceptions, prefers actually deploying a test DB and verifying it). His main argument is these days, database choice are very much a part of an application's arch decision and there is no point in pretending that they are swappable, which is what we are doing by mocking them in the tests. Let the DB be the part of the unit along with the DB layer.
+* Log for:  2022-02-21
+
+** TIL (+ commentary)
+*** Joy of Clojure book club (on Friday)
+We talked about Clojure philosophy, mainly covering:
+- Why is Clojure a Lisp
+- Clojure's separation of values from identity
+The latter brought a bit of confusion for me initially, because while I understood it conceptually, I wasn't too sure about how it manifested in Clojure. I said that the separation exists in Clojure due to all values being immutable (whether it is a scalar or a collection), and identity being supported through atomic references to values.
+
+Neena also asked me a question which at the time was a proper headscratcher:
+#+begin_quote
+If I modified an OO language such that everytime I modify a field in a class, it returns a new class with the changed field (and the other members are structurally shared). Have I separated identity and values?
+#+end_quote
+
+The answer is no. The problem with this is the object's identity will still be the instance of the object (almost by definition). What about the value? That is also the same object instance! Identity and value is one. It won't matter if we imitated persistence and immutability in objects.
+
+Had we modelled the same thing in Clojure, we would store the object fields as a map or record, which is a /value/ and not the /identity/ of the thing we are modelling. If we wanted to model an identity that evolves over time, we'd put that in one of Clojure's Ref-like containers.
+
+*** Misc
+- I also learnt how to setup fixtures in tests.
+- Learnt about =mount=, which at first seemed to have a lot of README dump that was daunting, but turned out to be rather simple to grasp and use. I should check out the mount presentation by Yogi sometime later for a deeper understanding.
+* Log for:  2022-02-22
+
+** TIL (+ commentary)
+*** Catch-up with Prabhanshu: Deploying to a Linux box
+Now that we have the flexibility of our own Linux box, there are many options to deploy an app to a Linux box. I had a very vague understanding before this.
+
+The options we enumerated are:
+- One time setup of services + scp/git clone the JAR to the server, and set that to autostart using scripts and systemd or its alternatives
+- Proxy the application behind Apache/Nginx
+- Use docker-compose to spin up the application services
+
+We are currently favouring the third option, as we already have a docker-compose file that was setup for testing and development, and it can naturally extend to production as well. We also get access to auto-restarts.
+
+The other two options would involve a lot more configuration that isn't as declarative.
+* Log for:  2022-02-24
+
+** TIL (+ commentary)
+*** Neat things that Docker allows me to do
+I learnt a neat way to deploy an application with Docker Compose (for my purposes, ie, a simple web app).
+
+If you set the DOCKER_HOST environment variable to an ssh url, it issues commands to the docker daemon on the remote host, and the remote host will pull all the necessary images and run the command. Because I can add a =restart=always= key to my compose spec, I get some minimum level of failure recovery for free.
+
+So this is how I am deploying my app. I don't need to transfer my source code to the server at all :)
+
+*** Stories
+Donut meetups at nilenso have always been great, and I end up learning stuff from people, even if we are just chilling. Today Udit gave me a small idea about Elixir's philosophy and how it handles concurrency. He shared a talk about it as well, which I might check out this weekend. He also told me a story about a prod failure from Insider.
+
+While yesterday's chat with Srihari and Shivam wasn't a donut meeting, I still got to hear stories about database perf issues from Gojek, and how Stuart Halloway fixed the bug for them by adding one character.
+
+What I'm trying to get at here is: please dump your stories @ me. I enjoy them a lot. thx
+* Log for:  2022-02-25
+
+** TIL (+ commentary)
+*** Joy of Clojure book club
+In today's episode of overloaded words:
+- collection: sets, vecs, lists, maps (but not string)
+- seq: API that requires implementation of ~first~ and ~rest~
+  - works on all collections and strings
+  - BUT
+  - ~seq?~ returns true only on ~lists~. ¿?
+    - this is because a ~first~ and other seq functions first convert the collection to a seq and then do the ~first~ operation on it.
+- sequential: vecs and lists, but nothing else (ie, data that has an ordering)
+- sequence: a sequential collection that may or may not be realized yet
+* Log for:  2022-02-28
+
+** TIL (+ commentary)
+*** Catch-up with Kiran
+Kiran verbally listed off several ways secrets are managed in projects he has seen. Some that I learnt about:
+- Using an external application like Vault (by Hashicorp) or (more rudimentary) mozilla/sops.
+- Barebones: dump the secrets in the server filesystem, either as a secret config file or =.env= file that is loaded into the environment on deployment.
+- Use a SaaS with shiny UI to add secrets and call that to get the required config.
+Bugle forms takes the second approach, because simplicity.
+* Log for:  2022-03-01
+
+** TIL (+ commentary)
+*** A note about generating random numbers in Clojure
+There isn't a great Clojure library that provides a proper CSPRNG function, which was surprising. The only okay one I found was [[https://funcool.github.io/buddy-core/latest/00-introduction.html][buddy/buddy-core]] which says on the documentation's front page that the API might break...
+
+The nice thing is that I can just use Java's interop. Since I only need a CSPRNG this lets me have it without needing any extra dependencies:
+#+begin_src clojure
+(defn generate-session-id
+  []
+  (let [random (SecureRandom.)
+        base64 (.withoutPadding (Base64/getUrlEncoder))
+        buffer (byte-array 32)]
+    (.nextBytes random buffer)
+    (.encodeToString base64 buffer)))
+#+end_src
+* Log for:  2022-03-02
+
+- Write a script to extract all the TIL's from these logs
+** TIL (+ commentary)
+*** Diagramming stuff
+Today, Kiran and I went on a fun tangent about diagramming/illustrative tools that people used in projects. We noticed that there's a spectrum of tools that lie between off-the-cuff scratch board vibes to a fully organised top down document map.
+- Excalidraw is pretty decent at quick drawings and demonstration. They have a plus version with more fancy project management stuff.
+- C4 is neat on an organisational level. It lets you draw maps which increase in resolution when you zoom in, ie, you get more low level diagrams as you drill down a more high level diagram. Kiran used this in Exotel when there were knowledge transfer problems between two siloed teams.
+- Mermaid is neat because you can use a simple DSL to describe your diagram in code, and the tool will figure out how to draw it clearly with proper alignment and everything. Really quick and because the diagram is code, it becomes easy to integrate it in the code repo itself and review and update it alongside the source.

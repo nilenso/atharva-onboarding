@@ -1,0 +1,28 @@
+#!/usr/bin/awk -f
+
+BEGIN { flag = 0; }
+
+/TITLE/ {
+    if ($2 == "TIL")
+        print "* Log for: ", $3
+    else
+        print "* Log for: ", $2
+}
+
+/.*today\??$/ ||
+/.*tomorrow\??$/ ||
+/Blocker./ {
+    flag = 0
+}
+
+/^*.*learned/ ||
+/^*.*TIL/ {
+    flag = 1
+}
+
+flag {
+    if ($0 ~ /^\*/)
+        printf "*"
+    if ($0 !~ /#\+TITLE:/)
+        print $0
+}
