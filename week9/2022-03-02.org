@@ -1,0 +1,17 @@
+#+TITLE: 2022-03-02
+
+* What did I do today
+- Finish login story
+- Open PR for login story
+* What will I do tomorrow
+- Address review for login story
+- Write an ADR for modelling the forms
+- Write a script to extract all the TIL's from these logs
+* Blockers
+nah
+* TIL (+ commentary)
+** Diagramming stuff
+Today, Kiran and I went on a fun tangent about diagramming/illustrative tools that people used in projects. We noticed that there's a spectrum of tools that lie between off-the-cuff scratch board vibes to a fully organised top down document map.
+- Excalidraw is pretty decent at quick drawings and demonstration. They have a plus version with more fancy project management stuff.
+- C4 is neat on an organisational level. It lets you draw maps which increase in resolution when you zoom in, ie, you get more low level diagrams as you drill down a more high level diagram. Kiran used this in Exotel when there were knowledge transfer problems between two siloed teams.
+- Mermaid is neat because you can use a simple DSL to describe your diagram in code, and the tool will figure out how to draw it clearly with proper alignment and everything. Really quick and because the diagram is code, it becomes easy to integrate it in the code repo itself and review and update it alongside the source.
