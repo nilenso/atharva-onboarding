@@ -1,0 +1,48 @@
+#+TITLE: 2022-03-04
+
+* What did I do today
+- Work on refactoring bugle routes
+* What will I do tomorrow
+- Address review for login story
+- Start the form builder work if the ADR gets a positive response
+* Blockers
+nah
+* TIL (+ commentary)
+** Learning (some) Clojure idioms is hard
+Compared to other languages, learning the "correct" way to do something is less obvious in Clojure. The community does not seem to have consensus on the right way of doing something (as opposed to say if your are on some framework like Rails). And having to weigh all sides of people advocating the right way can be tiring, especially when their arguments are not articulated with total clarity.
+
+I faced this problem today as well while trying to work with router-handler interactions in the bidi library. My question I posed on Slack summarizes the struggle well:
+#+begin_quote
+I've found this discussion somewhat frustrating to understand (wrt bidi/data-based routing): https://github.com/juxt/bidi/issues/35
+
+Can someone help me with it?
+
+I understood the part where you decouple the routing from the handler functions (by use of keywords. It's neat). What I don't understand is the rationale for having [[https://github.com/juxt/bidi#wrapmiddleware][WrapMiddleware]] and then explicitly saying in the docs to not use it. It feels contradictory.
+
+Some excerpts of things that confused me:
+
+> I tend to substitute wrap-params with params-request, wrap-cookies with cookies-request, etc. Ring middleware since 1.2 has been re-factored to allow direct access to the functionality (required for async). There's a slight risk of duplicated processing, but the positives are that you don't make assumptions as to which middleware has been applied and which hasn't.
+
+I assume this to mean that Malcolm is advocating to avoid using =wrap-*= functions that encompass all the handlers in your routes. We should instead, /individually/ return a session/params/cookie request and response, rather than apply middleware.
+
+> There is some middleware, like exception handlers like prone, that you just want applied across everywhere, so that's the rationale for keeping bidi's =->WrapMiddleware=.
+
+Wait, but =->WrapMiddleware= is not really applying a middleware across all handlers though? Isn't it specifically applying it to a handler of an individual route? Why would you want to use that for wrapping an exception handler, instead of plain threading?
+
+Either way it's clear that Malcolm dislikes using middleware in general:
+> I think middleware is great for quick and easy apps, but is generally abused when you scale up, and leads to a lot of tightly coupled code.
+
+What I find frustrating is despite that stance, the bidi.ring function's design is explicitly encouraging the use of middleware in the way the author is against—note how the documentation literally wraps parameters [[https://github.com/juxt/bidi#wrapping-as-a-ring-handler][here]].
+
+(Pardon the wall of text. I felt like I knew what's the right way of designing a web app with Ring, but now I don't know anymore. Maybe I should pick up a book?)
+#+end_quote
+** More on ADRs and feature flag deployments
+Kiran and I were discussing some nice properties of ADRs. Writing them down forces you to think your design through. What I found somewhat surprising is when Kiran told me that it is common to see strong advocacy for writing tech specs within an organization, while having no process of writing ADRs whatsoever, even if they are essentially the same thing; just at a different level of granularity.
+
+The value of ADRs are most visible when you join a project later in its lifecycle. It helps you catch-up with what would typically be "tribal knowledge", context known to only those involved in the project for a long time.
+
+I noted that nilenso's BDRs also helped me get some of the rationale behind why things in nilenso are the way they are. One main difference though—unlike ADRs, BDRs are made after the decision, not before it.
+
+We also talked about feature flag deployments, and how they help work around code review bottlenecks. Often you want to deploy a feature that couldn't been thoroughly reviewed, but you can't keep waiting. You can always deploy it but have it be under a feature flag, so that you don't break production. Then you can do a gradual rollout while still getting reviews on the code you have as it develops.
+
+Kiran told me about how they did this approach once for a major systemic change at a company, by adding a feature flag in Redis, so that it serves the new architectural change only to a small percentage of users. Then they could evaluate how well the new architecture worked and use that feedback to work out the kinks further.
