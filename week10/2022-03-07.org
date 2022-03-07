@@ -1,0 +1,136 @@
+#+TITLE: 2022-03-07
+
+* What did I do today
+- Work on refactoring bugle routes
+- Staffing discussion!
+* What will I do tomorrow
+- Discuss the flaws in my refactor
+- Merge login story
+* Blockers
+nah
+* TIL (+ commentary)
+** Design discussion: balancing responsibility at the routing layer
+Shafeeq's review of my code spurred a refactor of how I am handling responsibilities in my routing and controllers.
+
+In Bugle forms, a logged-in user is redirected away from the =/login= route to the dashboard. A lot of my handlers had redundant logic, where it inspects the request for the presence of a session and redirects away to the dashboard. Eg:
+#+begin_src clojure
+(def login
+  "Create a session on a successful login."
+  [{:keys [form-params session]}]
+  (if (:user session) ;; session exists?
+    (response/redirect "/dashboard" :see-other)
+    (let [session-data (user/authenticate form-params)]
+      (if (:error session-data)
+        (util/flash-redirect
+         "/login" "Login failed; Invalid email or password.")
+        (-> (response/redirect "/dashboard" :see-other)
+            (assoc :session (merge session {:user session-data})))))))
+  #+end_src
+
+Shafeeq pointed out that this checking for sessions for each handler can be abstracted out into its own middleware. I also realized that there are redirects for the converse case—a logged-out user is redirected away from =/dashboard= to the login page. Can this be abstracted away as well?
+
+Before the refactor my routes looked like this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get util-handlers/home}
+    "signup"    {:get user-handlers/signup
+                 :post (validate-request user-handlers/create-user
+                                         {:spec ::specs/signup-form
+                                          :request-field :form-params})}
+    "login"     {:get user-handlers/login
+                 :post user-handlers/create-session}
+    "logout"    {:get user-handlers/logout}
+    "dashboard" {:get user-handlers/dashboard}
+    "public"    {:get (br/->Resources {:prefix "public"})}
+    true        util-handlers/not-found}])
+#+end_src
+
+Notice that I am already having a middleware that applies to one of the routes for structural validation, ie, =validate-request=. If I were to add redirects based on user types in the same way, it would end up looking a bit like this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get util-handlers/home}
+    "signup"    {:get (wrap-access-control user-handlers/signup
+                                           {:needs :guest})
+                 :post (wrap-access-control
+                        (validate-request user-handlers/create-user
+                                         {:spec ::specs/signup-form
+                                          :request-field :form-params})
+                        {:needs :guest})}
+    "login"     {:get (wrap-access-control user-handlers/login
+                                           {:needs :guest})
+                 :post (wrap-access-control user-handlers/create-session
+                                            {:needs :guest})}
+    "logout"    {:get (wrap-access-control user-handlers/logout
+                                           {:needs :member})}
+    "dashboard" {:get (wrap-access-control user-handlers/dashboard
+                                           {:needs :member})}
+    "public"    {:get (br/->Resources {:prefix "public"})}
+    true        util-handlers/not-found}])
+#+end_src
+
+This code is not easy to parse, with all the stacking of higher order functions. There is also coupling between the /routing/ and /action/.
+
+I decided that it was time to refactor, and came up with this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get ::home}
+    "signup"    {:get  ::signup
+                 :post ::create-user}
+    "login"     {:get  ::login-form
+                 :post ::login}
+    "logout"    {:get ::logout}
+    "dashboard" {:get ::dashboard}
+    "public"    {:get (bidi.ring/->Resources {:prefix "public"})}
+    true        ::not-found}])
+
+(def handler-specs
+  "Specification of handlers for a matched route.
+  Contains guards for structural validation and access control. Not to be
+  confused with Clojure specs."
+  {::home        {:handler util-handlers/home}
+   ::signup      {:handler user-handlers/signup}
+   ::create-user {:handler user-handlers/create-user
+                  :validate {:spec  ::specs/signup-form
+                             :field :form-params}}
+   ::login-form  {:handler user-handlers/login-form
+                  :access-control {:needs :guest}}
+   ::login       {:handler user-handlers/login
+                  :access-control {:needs :guest}}
+   ::logout      {:handler  user-handlers/logout
+                  :access-control {:needs :member}}
+   ::dashboard   {:handler user-handlers/dashboard
+                  :access-control {:needs :member
+                                   :flash "Log in to access your dashboard."}}
+   ::not-found   {:handler util-handlers/not-found}})
+#+end_src
+
+Here, the actions are decoupled from the routes. We annotate our handlers with a declaration of the validation and access control (ie, redirect based on current user type) we want to enforce. We then have a dispatcher that translates this declaration into a handler that wraps the required functionality:
+
+#+begin_src clojure
+(defn handler-from-spec
+  "Parses a handler spec and returns a handler with the specified options."
+  [handler-key]
+  (let [handler-spec (routes/handler-specs handler-key)
+        {handler       :handler
+         validate-opts :validate
+         access-opts   :access-control} handler-spec]
+    (if handler-spec
+      (cond-> handler
+        validate-opts (mw/validate-request validate-opts)
+        access-opts (mw/wrap-access-control access-opts))
+      util/error-response)))
+
+(def route-handler
+  (bidi.ring/make-handler routes/routes handler-from-spec))
+  #+end_src
+
+While Kiran and Prabhanshu were in agreement about this change being an improvement, there were some concerns, specifically from Prabhanshu. He felt that (cwiiw) checking sessions and redirecting might be considered domain/controller logic and not something to be handled near the routing layer. My =:flash= key is an example of domain logic leaking into a layer that should only be structural and semantic validation.
+
+He said that I have chosen a middle ground between the two extremes of:
+1. Having all logic dumped into the handlers, making them huge and burdened with too many responsibilities
+2. Having handlers that are empty, with all the required functionality declared in the handler spec for the dispatcher to parse and process
+
+It's definitely a bit tricky to know where to draw the boundary of separation here. I'll hopefully define one by tomorrow.
