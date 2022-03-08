@@ -1,0 +1,19 @@
+#+TITLE: 2022-03-08
+
+* What did I do today
+- Finish bugle routes refactor
+* What will I do tomorrow
+- Merge login story
+- Start form creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** Balancing responsibility at the routing layer—an update
+An update from yesterday's post. I fixed the glaring abstraction leak by moving the logic related to flash messages into the middleware itself, which makes sense because the middleware is made aware of the access control entities anyway.
+** Misc
+- Talked about editors with Kiran, and got some Emacs maintainership history.
+- Talked to neena about his asymptotic work. I liked one thing he said (sometimes I think neena would make a great [[https://en.wikipedia.org/wiki/Aphorism][aphorist]]). Paraphrasing:
+  #+begin_quote
+"I've over time programmed enough to realize that all programming languages are the same. There's no difference between Haskell and Java."
+  #+end_quote
+- I write these logs more for myself than anyone else, but I wonder if anyone actually reads these logs.
