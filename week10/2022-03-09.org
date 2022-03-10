@@ -1,0 +1,14 @@
+#+TITLE: 2022-03-09
+
+* What did I do today
+- Finish bugle routes refactor
+- Wrap up login story
+* What will I do tomorrow
+- Attend reviews
+* Blockers
+nah
+* TIL (+ commentary)
+** Pairing with Sezal
+Got to know a bit about the heuristics for when to join data in the application or in the database. Sezal's broad recommendation was that if you are doing operations that do a lot of complex massaging of data, it's often nicer to do it in the application for that flexibility. But for more "batch" or coarse operations, do use the querying features of the database. It definitely is more performant to do operations in the DB—not only because of the planning and optimizations of queries, but also because you transmit much lesser data across the network, if you are able to filter out enough of what's definitely not required.
+** ADR-ing: an update
+Prabhanshu made me question my ADR even more, to the point that I'm feeling less sure about my final decision. He did show me a path to get my decision more firm as well, when we paired to note down all the entities and relationships that I am modelling. It was a useful exercise, and really exposed that I didn't think deeply enough about using relations for forms as much as I thought.
