@@ -1,0 +1,15 @@
+#+TITLE: 2022-03-14
+
+* What did I do today
+- Discuss modelling of Bugle Forms
+- Add some form builder frontend
+- Update ADR on form representation to incorporate new understanding of form models
+* What will I do tomorrow
+- Pair with people on form creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** Reviews
+There were no logs for the last two days of last week because we had annual reviews. Even though I was not a part of this feedback, there was a lot to learn by simply observing the feedback other people gave and got. I feel like I got a taste of the challenges that I might face later in my career.
+** Office IRL
+Today most of us are working in the same physical office. It feels nice to be around humans. I feel like I might absorb a lot of subtle things just by being more around nilenso folks.
