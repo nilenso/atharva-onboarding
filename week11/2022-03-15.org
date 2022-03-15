@@ -1,0 +1,14 @@
+#+TITLE: 2022-03-15
+
+* What did I do today
+- Work on form builder frontend
+* What will I do tomorrow
+- Pair with people on form creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** Miscellanea about HTML forms
+Some quirks that I didn't previously think of with HTML forms
+- =name= is what becomes the key to access the input value in the form submission
+- =id= is for the frontend, even if it semantically serves the same purpose
+- Receiving form inputs as a dynamic list of submitted inputs is possible by adding a =[]= to the end of the =name= attribute. This is a non-standard thing, and a convention supported by frameworks. (Gotta check if Ring can let me do it.)
