@@ -1,0 +1,43 @@
+#+TITLE: 2022-03-16
+
+* What did I do today
+- Work on form builder frontend
+- Discuss tradeoffs with middlewares
+- Finish ADR 2
+- Attended townhall
+* What will I do tomorrow
+- Pair with people on form creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** The tradeoffs with middleware
+Sandy had some answers and opinions to share about [[https://github.com/nilenso/atharva-onboarding/blob/main/week9/2022-03-04.org#learning-some-clojure-idioms-is-hard][a question]] I posed to the channel two weeks ago. Shivam wanted to know more about it as well.
+
+Here's what I learned from it:
+- The Clojure ecosystem forces you to build your own stack, and there are no right answers. Do what works best for your application. The extra work to know what's best is the price for the freedom and flexibility you get.
+- In the case of middlewares, the tradeoff is that you get rid of repetition, but it also becomes hard to keep a track of what middleware has been applied to a handler. It also makes testing only the handler difficult, unless you explicitly wrap all the middlewares around it. But a middleware makes sense for functionality that is needed for all handlers.
+- One idea that Sandy had to balance some of these tradeoffs is to have Flask-like annotations declared above a middleware so it's clear which middleware has been applied to a handler. In Clojure this could be done with a macro. The downside of this is that we don't have one central place where we can know what handlers are in use. This may or may not matter for your use case.
+** PUT vs POST
+PUT vs. POST, a lazy person's summary:
+#+begin_src
+POST /form/1
+POST /form/1
+POST /form/1
+=> Creates three forms with ID 1
+
+PUT /form/1
+PUT /form/1
+PUT /form/1
+=> Creates a form with ID 1 and replaces it with itself twice
+#+end_src
+Note that these are conventions. Nothing is actually idempotent, and I can make PUT and POST behave however I want.
+** Coverage
+In today's catch-up with Prabhanshu (with Neena, Arun and Yogi in the background), we got to the topic of coverage. I asked the absolutely no-right-answer question of "what's a good coverage number?"
+
+There is no right answer (insert shocked pikachu). But, if you have a project like Bugle Forms, where everything is testable with the infrastructure that we have, there is no good excuse to have figures like 70% or lower.
+
+That said a 100% coverage does not mean the codebase is well-tested. It's easy to write bogus assertions on all the functions and get your figures up. Coverage says nothing about the quality of tests.
+** "Do not design around your database model"
+Another statement that stood out to me in the catch-up was when I was discussing how to distribute responsibilities in my code. Should the =form= namespace handle form creation or the =user= namespace? I felt that it was up to =form=, but the reason I gave for it was a potential red flag. I said one of the reasons was that my namespaces touch only the tables of my database, and creating a new form in the =form= table should be up to the =form= namespace.
+
+This is backwards thinking. The database is modeled around your entities and not the other way round. So don't say what I said and definitely don't do what I said!
