@@ -857,3 +857,253 @@ Today, Kiran and I went on a fun tangent about diagramming/illustrative tools th
 - Excalidraw is pretty decent at quick drawings and demonstration. They have a plus version with more fancy project management stuff.
 - C4 is neat on an organisational level. It lets you draw maps which increase in resolution when you zoom in, ie, you get more low level diagrams as you drill down a more high level diagram. Kiran used this in Exotel when there were knowledge transfer problems between two siloed teams.
 - Mermaid is neat because you can use a simple DSL to describe your diagram in code, and the tool will figure out how to draw it clearly with proper alignment and everything. Really quick and because the diagram is code, it becomes easy to integrate it in the code repo itself and review and update it alongside the source.
+* Log for:  2022-03-03
+
+- Write a script to summarize TILs
+- Write an ADR for form representation
+** TIL (+ commentary)
+*** PostgreSQL and JSON
+I learnt that PostgreSQL has support for JSON columns, which is kinda cool. It lets you get some of the nice things that you get in flexible-schema NoSQL stores, while still keeping the relational stuff. This was what I felt suited Bugle Forms particularly well, because I wanted a [[https://github.com/nilenso/bugle-forms/blob/adr/002/doc/arch/adr-002-form-representation.md][some flexibility]] for form representation while still having the transactional SQL querying that I get from an RDBMS.
+
+You even have special operators that extend the SQL syntax for manipulating JSON data, and one of the JSON types can be indexed.
+
+PostgreSQL has two types of JSON columns: =json= and =jsonb=. The extremely-lazy-summary:
+- =json= is for the most part equivalent to a =text= type with JSON validation.
+- =jsonb= stores your JSON in an internal Postgres binary format. This makes reads faster and the fields easily indexable. Often what you want in most cases.
+* Log for:  2022-03-04
+
+** TIL (+ commentary)
+*** Learning (some) Clojure idioms is hard
+Compared to other languages, learning the "correct" way to do something is less obvious in Clojure. The community does not seem to have consensus on the right way of doing something (as opposed to say if your are on some framework like Rails). And having to weigh all sides of people advocating the right way can be tiring, especially when their arguments are not articulated with total clarity.
+
+I faced this problem today as well while trying to work with router-handler interactions in the bidi library. My question I posed on Slack summarizes the struggle well:
+#+begin_quote
+I've found this discussion somewhat frustrating to understand (wrt bidi/data-based routing): https://github.com/juxt/bidi/issues/35
+
+Can someone help me with it?
+
+I understood the part where you decouple the routing from the handler functions (by use of keywords. It's neat). What I don't understand is the rationale for having [[https://github.com/juxt/bidi#wrapmiddleware][WrapMiddleware]] and then explicitly saying in the docs to not use it. It feels contradictory.
+
+Some excerpts of things that confused me:
+
+> I tend to substitute wrap-params with params-request, wrap-cookies with cookies-request, etc. Ring middleware since 1.2 has been re-factored to allow direct access to the functionality (required for async). There's a slight risk of duplicated processing, but the positives are that you don't make assumptions as to which middleware has been applied and which hasn't.
+
+I assume this to mean that Malcolm is advocating to avoid using =wrap-*= functions that encompass all the handlers in your routes. We should instead, /individually/ return a session/params/cookie request and response, rather than apply middleware.
+
+> There is some middleware, like exception handlers like prone, that you just want applied across everywhere, so that's the rationale for keeping bidi's =->WrapMiddleware=.
+
+Wait, but =->WrapMiddleware= is not really applying a middleware across all handlers though? Isn't it specifically applying it to a handler of an individual route? Why would you want to use that for wrapping an exception handler, instead of plain threading?
+
+Either way it's clear that Malcolm dislikes using middleware in general:
+> I think middleware is great for quick and easy apps, but is generally abused when you scale up, and leads to a lot of tightly coupled code.
+
+What I find frustrating is despite that stance, the bidi.ring function's design is explicitly encouraging the use of middleware in the way the author is against—note how the documentation literally wraps parameters [[https://github.com/juxt/bidi#wrapping-as-a-ring-handler][here]].
+
+(Pardon the wall of text. I felt like I knew what's the right way of designing a web app with Ring, but now I don't know anymore. Maybe I should pick up a book?)
+#+end_quote
+*** More on ADRs and feature flag deployments
+Kiran and I were discussing some nice properties of ADRs. Writing them down forces you to think your design through. What I found somewhat surprising is when Kiran told me that it is common to see strong advocacy for writing tech specs within an organization, while having no process of writing ADRs whatsoever, even if they are essentially the same thing; just at a different level of granularity.
+
+The value of ADRs are most visible when you join a project later in its lifecycle. It helps you catch-up with what would typically be "tribal knowledge", context known to only those involved in the project for a long time.
+
+I noted that nilenso's BDRs also helped me get some of the rationale behind why things in nilenso are the way they are. One main difference though—unlike ADRs, BDRs are made after the decision, not before it.
+
+We also talked about feature flag deployments, and how they help work around code review bottlenecks. Often you want to deploy a feature that couldn't been thoroughly reviewed, but you can't keep waiting. You can always deploy it but have it be under a feature flag, so that you don't break production. Then you can do a gradual rollout while still getting reviews on the code you have as it develops.
+
+Kiran told me about how they did this approach once for a major systemic change at a company, by adding a feature flag in Redis, so that it serves the new architectural change only to a small percentage of users. Then they could evaluate how well the new architecture worked and use that feedback to work out the kinks further.
+* Log for:  2022-03-07
+
+** TIL (+ commentary)
+*** Design discussion: balancing responsibility at the routing layer
+Shafeeq's review of my code spurred a refactor of how I am handling responsibilities in my routing and controllers.
+
+In Bugle forms, a logged-in user is redirected away from the =/login= route to the dashboard. A lot of my handlers had redundant logic, where it inspects the request for the presence of a session and redirects away to the dashboard. Eg:
+#+begin_src clojure
+(def login
+  "Create a session on a successful login."
+  [{:keys [form-params session]}]
+  (if (:user session) ;; session exists?
+    (response/redirect "/dashboard" :see-other)
+    (let [session-data (user/authenticate form-params)]
+      (if (:error session-data)
+        (util/flash-redirect
+         "/login" "Login failed; Invalid email or password.")
+        (-> (response/redirect "/dashboard" :see-other)
+            (assoc :session (merge session {:user session-data})))))))
+  #+end_src
+
+Shafeeq pointed out that this checking for sessions for each handler can be abstracted out into its own middleware. I also realized that there are redirects for the converse case—a logged-out user is redirected away from =/dashboard= to the login page. Can this be abstracted away as well?
+
+Before the refactor my routes looked like this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get util-handlers/home}
+    "signup"    {:get user-handlers/signup
+                 :post (validate-request user-handlers/create-user
+                                         {:spec ::specs/signup-form
+                                          :request-field :form-params})}
+    "login"     {:get user-handlers/login
+                 :post user-handlers/create-session}
+    "logout"    {:get user-handlers/logout}
+    "dashboard" {:get user-handlers/dashboard}
+    "public"    {:get (br/->Resources {:prefix "public"})}
+    true        util-handlers/not-found}])
+#+end_src
+
+Notice that I am already having a middleware that applies to one of the routes for structural validation, ie, =validate-request=. If I were to add redirects based on user types in the same way, it would end up looking a bit like this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get util-handlers/home}
+    "signup"    {:get (wrap-access-control user-handlers/signup
+                                           {:needs :guest})
+                 :post (wrap-access-control
+                        (validate-request user-handlers/create-user
+                                         {:spec ::specs/signup-form
+                                          :request-field :form-params})
+                        {:needs :guest})}
+    "login"     {:get (wrap-access-control user-handlers/login
+                                           {:needs :guest})
+                 :post (wrap-access-control user-handlers/create-session
+                                            {:needs :guest})}
+    "logout"    {:get (wrap-access-control user-handlers/logout
+                                           {:needs :member})}
+    "dashboard" {:get (wrap-access-control user-handlers/dashboard
+                                           {:needs :member})}
+    "public"    {:get (br/->Resources {:prefix "public"})}
+    true        util-handlers/not-found}])
+#+end_src
+
+This code is not easy to parse, with all the stacking of higher order functions. There is also coupling between the /routing/ and /action/.
+
+I decided that it was time to refactor, and came up with this:
+#+begin_src clojure
+(def routes
+  ["/"
+   {""          {:get ::home}
+    "signup"    {:get  ::signup
+                 :post ::create-user}
+    "login"     {:get  ::login-form
+                 :post ::login}
+    "logout"    {:get ::logout}
+    "dashboard" {:get ::dashboard}
+    "public"    {:get (bidi.ring/->Resources {:prefix "public"})}
+    true        ::not-found}])
+
+(def handler-specs
+  "Specification of handlers for a matched route.
+  Contains guards for structural validation and access control. Not to be
+  confused with Clojure specs."
+  {::home        {:handler util-handlers/home}
+   ::signup      {:handler user-handlers/signup}
+   ::create-user {:handler user-handlers/create-user
+                  :validate {:spec  ::specs/signup-form
+                             :field :form-params}}
+   ::login-form  {:handler user-handlers/login-form
+                  :access-control {:needs :guest}}
+   ::login       {:handler user-handlers/login
+                  :access-control {:needs :guest}}
+   ::logout      {:handler  user-handlers/logout
+                  :access-control {:needs :member}}
+   ::dashboard   {:handler user-handlers/dashboard
+                  :access-control {:needs :member
+                                   :flash "Log in to access your dashboard."}}
+   ::not-found   {:handler util-handlers/not-found}})
+#+end_src
+
+Here, the actions are decoupled from the routes. We annotate our handlers with a declaration of the validation and access control (ie, redirect based on current user type) we want to enforce. We then have a dispatcher that translates this declaration into a handler that wraps the required functionality:
+
+#+begin_src clojure
+(defn handler-from-spec
+  "Parses a handler spec and returns a handler with the specified options."
+  [handler-key]
+  (let [handler-spec (routes/handler-specs handler-key)
+        {handler       :handler
+         validate-opts :validate
+         access-opts   :access-control} handler-spec]
+    (if handler-spec
+      (cond-> handler
+        validate-opts (mw/validate-request validate-opts)
+        access-opts (mw/wrap-access-control access-opts))
+      util/error-response)))
+
+(def route-handler
+  (bidi.ring/make-handler routes/routes handler-from-spec))
+  #+end_src
+
+While Kiran and Prabhanshu were in agreement about this change being an improvement, there were some concerns, specifically from Prabhanshu. He felt that (cwiiw) checking sessions and redirecting might be considered domain/controller logic and not something to be handled near the routing layer. My =:flash= key is an example of domain logic leaking into a layer that should only be structural and semantic validation.
+
+He said that I have chosen a middle ground between the two extremes of:
+1. Having all logic dumped into the handlers, making them huge and burdened with too many responsibilities
+2. Having handlers that are empty, with all the required functionality declared in the handler spec for the dispatcher to parse and process
+
+It's definitely a bit tricky to know where to draw the boundary of separation here. I'll hopefully define one by tomorrow.
+* Log for:  2022-03-08
+
+** TIL (+ commentary)
+*** Balancing responsibility at the routing layer—an update
+An update from yesterday's post. I fixed the glaring abstraction leak by moving the logic related to flash messages into the middleware itself, which makes sense because the middleware is made aware of the access control entities anyway.
+*** Misc
+- Talked about editors with Kiran, and got some Emacs maintainership history.
+- Talked to neena about his asymptotic work. I liked one thing he said (sometimes I think neena would make a great [[https://en.wikipedia.org/wiki/Aphorism][aphorist]]). Paraphrasing:
+  #+begin_quote
+"I've over time programmed enough to realize that all programming languages are the same. There's no difference between Haskell and Java."
+  #+end_quote
+- I write these logs more for myself than anyone else, but I wonder if anyone actually reads these logs.
+* Log for:  2022-03-09
+
+** TIL (+ commentary)
+*** Pairing with Sezal
+Got to know a bit about the heuristics for when to join data in the application or in the database. Sezal's broad recommendation was that if you are doing operations that do a lot of complex massaging of data, it's often nicer to do it in the application for that flexibility. But for more "batch" or coarse operations, do use the querying features of the database. It definitely is more performant to do operations in the DB—not only because of the planning and optimizations of queries, but also because you transmit much lesser data across the network, if you are able to filter out enough of what's definitely not required.
+*** ADR-ing: an update
+Prabhanshu made me question my ADR even more, to the point that I'm feeling less sure about my final decision. He did show me a path to get my decision more firm as well, when we paired to note down all the entities and relationships that I am modelling. It was a useful exercise, and really exposed that I didn't think deeply enough about using relations for forms as much as I thought.
+* Log for:  2022-03-14
+
+** TIL (+ commentary)
+*** Reviews
+There were no logs for the last two days of last week because we had annual reviews. Even though I was not a part of this feedback, there was a lot to learn by simply observing the feedback other people gave and got. I feel like I got a taste of the challenges that I might face later in my career.
+*** Office IRL
+Today most of us are working in the same physical office. It feels nice to be around humans. I feel like I might absorb a lot of subtle things just by being more around nilenso folks.
+* Log for:  2022-03-15
+
+** TIL (+ commentary)
+*** Miscellanea about HTML forms
+Some quirks that I didn't previously think of with HTML forms
+- =name= is what becomes the key to access the input value in the form submission
+- =id= is for the frontend, even if it semantically serves the same purpose
+- Receiving form inputs as a dynamic list of submitted inputs is possible by adding a =[]= to the end of the =name= attribute. This is a non-standard thing, and a convention supported by frameworks. (Gotta check if Ring can let me do it.)
+* Log for:  2022-03-16
+
+** TIL (+ commentary)
+*** The tradeoffs with middleware
+Sandy had some answers and opinions to share about [[https://github.com/nilenso/atharva-onboarding/blob/main/week9/2022-03-04.org#learning-some-clojure-idioms-is-hard][a question]] I posed to the channel two weeks ago. Shivam wanted to know more about it as well.
+
+Here's what I learned from it:
+- The Clojure ecosystem forces you to build your own stack, and there are no right answers. Do what works best for your application. The extra work to know what's best is the price for the freedom and flexibility you get.
+- In the case of middlewares, the tradeoff is that you get rid of repetition, but it also becomes hard to keep a track of what middleware has been applied to a handler. It also makes testing only the handler difficult, unless you explicitly wrap all the middlewares around it. But a middleware makes sense for functionality that is needed for all handlers.
+- One idea that Sandy had to balance some of these tradeoffs is to have Flask-like annotations declared above a middleware so it's clear which middleware has been applied to a handler. In Clojure this could be done with a macro. The downside of this is that we don't have one central place where we can know what handlers are in use. This may or may not matter for your use case.
+*** PUT vs POST
+PUT vs. POST, a lazy person's summary:
+#+begin_src
+POST /form/1
+POST /form/1
+POST /form/1
+=> Creates three forms with ID 1
+
+PUT /form/1
+PUT /form/1
+PUT /form/1
+=> Creates a form with ID 1 and replaces it with itself twice
+#+end_src
+Note that these are conventions. Nothing is actually idempotent, and I can make PUT and POST behave however I want.
+*** Coverage
+In today's catch-up with Prabhanshu (with Neena, Arun and Yogi in the background), we got to the topic of coverage. I asked the absolutely no-right-answer question of "what's a good coverage number?"
+
+There is no right answer (insert shocked pikachu). But, if you have a project like Bugle Forms, where everything is testable with the infrastructure that we have, there is no good excuse to have figures like 70% or lower.
+
+That said a 100% coverage does not mean the codebase is well-tested. It's easy to write bogus assertions on all the functions and get your figures up. Coverage says nothing about the quality of tests.
+*** "Do not design around your database model"
+Another statement that stood out to me in the catch-up was when I was discussing how to distribute responsibilities in my code. Should the =form= namespace handle form creation or the =user= namespace? I felt that it was up to =form=, but the reason I gave for it was a potential red flag. I said one of the reasons was that my namespaces touch only the tables of my database, and creating a new form in the =form= table should be up to the =form= namespace.
+
+This is backwards thinking. The database is modeled around your entities and not the other way round. So don't say what I said and definitely don't do what I said!
