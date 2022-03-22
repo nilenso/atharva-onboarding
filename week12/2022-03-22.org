@@ -1,0 +1,18 @@
+#+TITLE: 2022-03-22
+
+* What did I do today
+- Address reviews for form creation story
+- Work on functional conf sponsor email
+* What will I do tomorrow
+- Start question creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** Consulting as a "junior"
+I asked on the Slack channel about what can engineers straight out of college (ie, me) can bring to the table as a consultant. And what do clients expect from the less experienced people staffed on a project?
+
+A bunch of people answered (Sandy, Neena, Shivam) and I'll summarize the general themes I got from their answers.
+
+- Clients hire external consultants because there is strong chance of getting quality engineers to work on their project (for consulting firms that have a great reputation like nilenso at least). The main expectation from junior engineers is to basically deliver high quality work on things that the client needs to get done.
+- Consultants, being external to the organization have leverage to do certain things that employees cannot (regardless of seniority).
+- Even if you are not solving big picture problems, there is still a lot of quality work that is needed and can be delivered at a per-story level that junior engineers are often working on.
