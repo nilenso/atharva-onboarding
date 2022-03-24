@@ -1,0 +1,26 @@
+#+TITLE: 2022-03-23
+
+* What did I do today
+- Work on creation story
+* What will I do tomorrow
+- Merge form creation story and if possible, question creation story
+* Blockers
+nah
+* TIL (+ commentary)
+** Bug in Clojure specs
+I discovered what may possibly be a bug in Clojure's spec library. I cannot override the generator of a spec (via the second argument of =s/gen=), if the spec is indirect.
+
+Reproducer:
+#+begin_src clojure
+(s/def ::test string?)
+(s/def ::another-test ::test)
+(gen/generate (s/gen ::test {::test (fn [] (gen/return "abc"))}))
+;; => "abc"
+(gen/generate (s/gen ::another-test {::another-test (fn [] (gen/return "abc"))}))
+;; => "ajskhd21e"
+#+end_src
+
+** Story points are not for estimation
+This is more of opinion territory, but neena gave me some clarity about story points today after I told him I did not see much value in it.
+
+He opined that the goal of story points is not to estimate how long it will take to do a story (there are better tools for that) and we should avoid the pattern of translating points to timelines. The goal of story points is to get the whole team to agree on how complex a story is. The story point process (done in a rock-paper-scissors kind of way) will bring up any discrepancies in how complex a story is perceived among a team.
