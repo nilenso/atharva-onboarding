@@ -1,0 +1,22 @@
+#+TITLE: 2022-03-24
+
+* What did I do today
+- Merge form creation story
+- Make PR for add question story
+- Attend FnConf and minor sponsor booth duty
+* What will I do tomorrow
+- Reviews for add question story
+* Blockers
+nah
+* TIL (+ commentary)
+** FnConf: A chat with Radek Szymczyszyn
+I attended a talk on gradual typing system, that Radek, a developer in Poland was working on. He was demonstrating an implementation of gradual typing on Elixir with a few examples of how it can be used in practice. After the talk I had a chat with him where I asked him this question on the effect of using gradual typing in a codebase:
+#+begin_quote
+I've noticed that with gradual typing, you start loose with the types, and constrain it over time—ie being subtractive with the input and output domains. With static typing, it's often additive, ie you start with the most constrained possible program and add flexibility through type modifiers (Maybe/Sum types etc). What are the implications of this in a program's evolution?
+#+end_quote
+
+Radek said that because gradual typing is not quite mainstream in a lot of production projects yet, its effect on evolving the codebase is still an unknown. Since he comes from a dynamic typing discipline (ie, Elixir), he found gradual typing as a way to enforce contracts and specs at runtime instead of compile time, rather than a way to aim for formal correctness that a lot of statically typed languages strive for. Kind of similar to if all my Clojure specs that I'm writing down anyway can be used to stop my program at compile time if something goes wrong. This approach as an incremental upgrade for a dynamically typed language was confirmed by Jaeseung Han, a developer from Japan, who posted in chat:
+
+#+begin_quote
+My team writes some monkey-patching adhoc mess to a pre-existing python code, then do a lot of gradual typing to make it into a “sane” code. It helps to locate the bottleneck and we move the bottleneck to numpy or reimplement c++, rust and stuff. After having the partially typed code, regression is much easier too. I find gradual typing very helpful for finding design flaws while doing refactoring. Definitely an another reason to dive more into erlang/elixir.
+#+end_quote
