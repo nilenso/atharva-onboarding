@@ -1,0 +1,13 @@
+#+TITLE: 2022-03-29
+
+* What did I do today
+- Merge add question story
+* What will I do tomorrow
+- Start form publish story
+* Blockers
+nah
+* TIL (+ commentary)
+** Testing frontend stuff
+I got a test coverage score on the low side thanks to my lack of testing for layouts and frontend stuff. In neena and Prabhanshu's experience, these aren't that commonly tested in projects they have worked at. If it does happen, it will be for some commonly used component with specific behaviours that must be tested.
+** Enum is probably what you want, not Bool
+When I had listed down my tasks for a story where users can publish forms on Bugle forms, I thought of adding a boolean attribute to the =form= table like =is_published=. There is a much better alternative—use a sum type (ie, enums) like =publish_status= with values like =draft= and =published=. This more clearly expresses the domain and also allows future extensions to multiple phases of a publishing lifecycle (eg: =expired= for forms that have been set to expire after a date).
