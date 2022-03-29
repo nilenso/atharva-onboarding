@@ -1,0 +1,29 @@
+#+TITLE: 2022-03-25
+
+* What did I do today
+- Attend FnConf
+* What will I do on tuesday
+- Work from Gangtok
+- Merge add question story
+* Blockers
+nah
+* TIL (+ commentary)
+** FnConf
+*** Dhananjay Nene - Snippets from an algorithmic trading system in Kotlin
+Dense in content, and I didn't catch everything, but some key takeaways for me.
+- The snippets were shown mostly for options trading. Some domain-specific terms:
+  - Option: A financial instrument that gives the holder the right, but not the obligation to buy or sell a security. They can be either put options or call options, for the option of selling or buying respectively.
+  - Strike price: The price at which the holder of the option decides to buy and sell the option. This along with the option's expiry date are the most important decisions.
+  - Option Chain: This tracks the market movement of option prices over time. There are a ton of parameters for a certain strike price, and these are different for whether it is a put or call option. At a particular point in time there are a range of strike prices, and for a particular strike price there are different times at which that strike price is reached, thus making it a three-dimensional data.
+  - Candles: Parameters for a candle in a candlestick chart used for analysis and tracking movements of prices.
+- Some main ideas for making this work:
+  - Define a bunch of interfaces, some that inherit from other interfaces to make a rich collection of domain object types. Support important slicing and dicing operations in these. He also overloaded the indexing operator in the interfaces where indexing with a price will return the nearest recorded strike price information along with the times.
+  - Use of channels and actors for asynchronous communication between the trade strategy functionality and the trade manager that carries out the trades.
+*** Rodrigo Girão Serrão - Why APL is a language worth knowing
+- If I saw this talk three years ago, I'd have found it a lot more informative and enlightening. Rodrigo has shown a lot of functional programming patterns that I already knew of via APL code.
+- My understanding is APL is basically like any other functional language, except that it has baked-in polymorphism for detecting if your function is applied on an array or a scalar, and performs the relevant operation for it. Other than that I didn't take away much tbh. Maybe I should see Adi's posts to "get" APL.
+*** Mey Beisaron - Multiplayer Online Game in Clojure: Attack of the Clones
+- A talk about multiplayer game development in Clojure (and in general), through her toy game of monkeys collecting exceptions on a map.
+- I learnt a lot about how it's really important to have "protocols" to update game state for all players, and that there could be many architectures for doing so. The one used by Mey was to have a central control handler that receives all the actions from every user, and fan out the updates to the other user.
+- Clojure's atoms and maps really simplify the above architecture with elegant, functional code.
+- She used websockets to transmit the "protocol" messages of her game.
