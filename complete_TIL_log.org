@@ -1107,3 +1107,77 @@ That said a 100% coverage does not mean the codebase is well-tested. It's easy t
 Another statement that stood out to me in the catch-up was when I was discussing how to distribute responsibilities in my code. Should the =form= namespace handle form creation or the =user= namespace? I felt that it was up to =form=, but the reason I gave for it was a potential red flag. I said one of the reasons was that my namespaces touch only the tables of my database, and creating a new form in the =form= table should be up to the =form= namespace.
 
 This is backwards thinking. The database is modeled around your entities and not the other way round. So don't say what I said and definitely don't do what I said!
+* Log for:  2022-03-22
+
+** TIL (+ commentary)
+*** Consulting as a "junior"
+I asked on the Slack channel about what can engineers straight out of college (ie, me) can bring to the table as a consultant. And what do clients expect from the less experienced people staffed on a project?
+
+A bunch of people answered (Sandy, Neena, Shivam) and I'll summarize the general themes I got from their answers.
+
+- Clients hire external consultants because there is strong chance of getting quality engineers to work on their project (for consulting firms that have a great reputation like nilenso at least). The main expectation from junior engineers is to basically deliver high quality work on things that the client needs to get done.
+- Consultants, being external to the organization have leverage to do certain things that employees cannot (regardless of seniority).
+- Even if you are not solving big picture problems, there is still a lot of quality work that is needed and can be delivered at a per-story level that junior engineers are often working on.
+* Log for:  2022-03-23
+
+** TIL (+ commentary)
+*** Bug in Clojure specs
+I discovered what may possibly be a bug in Clojure's spec library. I cannot override the generator of a spec (via the second argument of =s/gen=), if the spec is indirect.
+
+Reproducer:
+#+begin_src clojure
+(s/def ::test string?)
+(s/def ::another-test ::test)
+(gen/generate (s/gen ::test {::test (fn [] (gen/return "abc"))}))
+;; => "abc"
+(gen/generate (s/gen ::another-test {::another-test (fn [] (gen/return "abc"))}))
+;; => "ajskhd21e"
+#+end_src
+
+*** Story points are not for estimation
+This is more of opinion territory, but neena gave me some clarity about story points today after I told him I did not see much value in it.
+
+He opined that the goal of story points is not to estimate how long it will take to do a story (there are better tools for that) and we should avoid the pattern of translating points to timelines. The goal of story points is to get the whole team to agree on how complex a story is. The story point process (done in a rock-paper-scissors kind of way) will bring up any discrepancies in how complex a story is perceived among a team.
+* Log for:  2022-03-24
+
+** TIL (+ commentary)
+*** FnConf: A chat with Radek Szymczyszyn
+I attended a talk on gradual typing system, that Radek, a developer in Poland was working on. He was demonstrating an implementation of gradual typing on Elixir with a few examples of how it can be used in practice. After the talk I had a chat with him where I asked him this question on the effect of using gradual typing in a codebase:
+#+begin_quote
+I've noticed that with gradual typing, you start loose with the types, and constrain it over time—ie being subtractive with the input and output domains. With static typing, it's often additive, ie you start with the most constrained possible program and add flexibility through type modifiers (Maybe/Sum types etc). What are the implications of this in a program's evolution?
+#+end_quote
+
+Radek said that because gradual typing is not quite mainstream in a lot of production projects yet, its effect on evolving the codebase is still an unknown. Since he comes from a dynamic typing discipline (ie, Elixir), he found gradual typing as a way to enforce contracts and specs at runtime instead of compile time, rather than a way to aim for formal correctness that a lot of statically typed languages strive for. Kind of similar to if all my Clojure specs that I'm writing down anyway can be used to stop my program at compile time if something goes wrong. This approach as an incremental upgrade for a dynamically typed language was confirmed by Jaeseung Han, a developer from Japan, who posted in chat:
+
+#+begin_quote
+My team writes some monkey-patching adhoc mess to a pre-existing python code, then do a lot of gradual typing to make it into a “sane” code. It helps to locate the bottleneck and we move the bottleneck to numpy or reimplement c++, rust and stuff. After having the partially typed code, regression is much easier too. I find gradual typing very helpful for finding design flaws while doing refactoring. Definitely an another reason to dive more into erlang/elixir.
+#+end_quote
+* Log for:  2022-03-25
+
+** TIL (+ commentary)
+*** FnConf
+**** Dhananjay Nene - Snippets from an algorithmic trading system in Kotlin
+Dense in content, and I didn't catch everything, but some key takeaways for me.
+- The snippets were shown mostly for options trading. Some domain-specific terms:
+  - Option: A financial instrument that gives the holder the right, but not the obligation to buy or sell a security. They can be either put options or call options, for the option of selling or buying respectively.
+  - Strike price: The price at which the holder of the option decides to buy and sell the option. This along with the option's expiry date are the most important decisions.
+  - Option Chain: This tracks the market movement of option prices over time. There are a ton of parameters for a certain strike price, and these are different for whether it is a put or call option. At a particular point in time there are a range of strike prices, and for a particular strike price there are different times at which that strike price is reached, thus making it a three-dimensional data.
+  - Candles: Parameters for a candle in a candlestick chart used for analysis and tracking movements of prices.
+- Some main ideas for making this work:
+  - Define a bunch of interfaces, some that inherit from other interfaces to make a rich collection of domain object types. Support important slicing and dicing operations in these. He also overloaded the indexing operator in the interfaces where indexing with a price will return the nearest recorded strike price information along with the times.
+  - Use of channels and actors for asynchronous communication between the trade strategy functionality and the trade manager that carries out the trades.
+**** Rodrigo Girão Serrão - Why APL is a language worth knowing
+- If I saw this talk three years ago, I'd have found it a lot more informative and enlightening. Rodrigo has shown a lot of functional programming patterns that I already knew of via APL code.
+- My understanding is APL is basically like any other functional language, except that it has baked-in polymorphism for detecting if your function is applied on an array or a scalar, and performs the relevant operation for it. Other than that I didn't take away much tbh. Maybe I should see Adi's posts to "get" APL.
+**** Mey Beisaron - Multiplayer Online Game in Clojure: Attack of the Clones
+- A talk about multiplayer game development in Clojure (and in general), through her toy game of monkeys collecting exceptions on a map.
+- I learnt a lot about how it's really important to have "protocols" to update game state for all players, and that there could be many architectures for doing so. The one used by Mey was to have a central control handler that receives all the actions from every user, and fan out the updates to the other user.
+- Clojure's atoms and maps really simplify the above architecture with elegant, functional code.
+- She used websockets to transmit the "protocol" messages of her game.
+* Log for:  2022-03-29
+
+** TIL (+ commentary)
+*** Testing frontend stuff
+I got a test coverage score on the low side thanks to my lack of testing for layouts and frontend stuff. In neena and Prabhanshu's experience, these aren't that commonly tested in projects they have worked at. If it does happen, it will be for some commonly used component with specific behaviours that must be tested.
+*** Enum is probably what you want, not Bool
+When I had listed down my tasks for a story where users can publish forms on Bugle forms, I thought of adding a boolean attribute to the =form= table like =is_published=. There is a much better alternative—use a sum type (ie, enums) like =publish_status= with values like =draft= and =published=. This more clearly expresses the domain and also allows future extensions to multiple phases of a publishing lifecycle (eg: =expired= for forms that have been set to expire after a date).
