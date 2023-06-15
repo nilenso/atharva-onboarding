@@ -716,10 +716,10 @@ It was a productive 2-hour session, and I don't think I can write down everythin
 #+end_src
 
 The idea is that you have these boxes (A, B and C) with different components in them, and a good boundary is when
-- A, B and C /occasionally/ calls between each other
-- Their inner components /often/ call each other
+- A, B and C /occasionally/ communicate with each other
+- Their inner components /often/ communicate each other
 
-This is a sign that we have cleanly separated out the responsibilities. So A, B and C can be something like a Controller, View and Controller, with domain objects inside them, or maybe they could be domain objects with their own little MVCs inside them. Pick the scheme that gives you cleaner boundaries.
+This is a sign that we have cleanly separated out the responsibilities. So A, B and C can be something like a Model, View and Controller, with domain objects inside them, or maybe they could be domain objects with their own little MVCs inside them. Pick the scheme that gives you cleaner boundaries.
 
 Another important principle I learned was about defensive layering in a web application. Srihari showed a really neat diagram which is rather self-explanatory:
 
